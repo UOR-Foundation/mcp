@@ -1,0 +1,259 @@
+/**
+ * GitHub API Client for UOR MCP Implementation
+ */
+import { Octokit } from '@octokit/rest';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+/**
+ * Interface for GitHub repository content
+ */
+export interface GitHubContent {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  html_url: string;
+  git_url: string;
+  download_url: string | null;
+  type: string;
+  content?: string;
+  encoding?: string;
+}
+
+/**
+ * Interface for repository creation parameters
+ */
+export interface RepoCreationParams {
+  name: string;
+  description?: string;
+  private?: boolean;
+  auto_init?: boolean;
+}
+
+/**
+ * Interface for file creation parameters
+ */
+export interface FileCreationParams {
+  owner: string;
+  repo: string;
+  path: string;
+  message: string;
+  content: string;
+  branch?: string;
+}
+
+/**
+ * Interface for file update parameters
+ */
+export interface FileUpdateParams extends FileCreationParams {
+  sha: string;
+}
+
+/**
+ * GitHub client for UOR operations
+ */
+export class GitHubClient {
+  private octokit: Octokit;
+  
+  /**
+   * Creates a new GitHub client
+   * @param token GitHub personal access token
+   */
+  constructor(token: string) {
+    this.octokit = new Octokit({
+      auth: token
+    });
+  }
+  
+  /**
+   * Creates a GitHub client from environment variables
+   * @returns A new GitHub client
+   */
+  static fromEnv(): GitHubClient {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+      throw new Error('GITHUB_TOKEN environment variable is not set');
+    }
+    return new GitHubClient(token);
+  }
+  
+  /**
+   * Gets the authenticated user information
+   */
+  async getAuthenticatedUser() {
+    const { data } = await this.octokit.users.getAuthenticated();
+    return data;
+  }
+  
+  /**
+   * Checks if a repository exists for the authenticated user
+   * @param repoName Repository name
+   */
+  async repositoryExists(repoName: string): Promise<boolean> {
+    try {
+      const user = await this.getAuthenticatedUser();
+      await this.octokit.repos.get({
+        owner: user.login,
+        repo: repoName
+      });
+      return true;
+    } catch (error) {
+      if ((error as any).status === 404) {
+        return false;
+      }
+      throw error;
+    }
+  }
+  
+  /**
+   * Creates a new repository for the authenticated user
+   * @param params Repository creation parameters
+   */
+  async createRepository(params: RepoCreationParams) {
+    const { data } = await this.octokit.repos.createForAuthenticatedUser({
+      name: params.name,
+      description: params.description,
+      private: params.private,
+      auto_init: params.auto_init
+    });
+    return data;
+  }
+  
+  /**
+   * Gets or creates a UOR database repository
+   * @param username GitHub username
+   */
+  async getOrCreateUORDb(username: string) {
+    const repoName = 'uordb';
+    const exists = await this.repositoryExists(repoName);
+    
+    if (!exists) {
+      return await this.createRepository({
+        name: repoName,
+        description: 'Universal Object Reference Database',
+        private: false,
+        auto_init: true
+      });
+    }
+    
+    const { data } = await this.octokit.repos.get({
+      owner: username,
+      repo: repoName
+    });
+    
+    return data;
+  }
+  
+  /**
+   * Gets repository content
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param path Path to content
+   * @param ref Git reference (branch, tag, commit)
+   */
+  async getContent(owner: string, repo: string, path: string, ref?: string) {
+    const { data } = await this.octokit.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref
+    });
+    
+    return data;
+  }
+  
+  /**
+   * Creates a file in a repository
+   * @param params File creation parameters
+   */
+  async createFile(params: FileCreationParams) {
+    const { data } = await this.octokit.repos.createOrUpdateFileContents({
+      ...params,
+      content: Buffer.from(params.content).toString('base64')
+    });
+    
+    return data;
+  }
+  
+  /**
+   * Updates a file in a repository
+   * @param params File update parameters
+   */
+  async updateFile(params: FileUpdateParams) {
+    const { data } = await this.octokit.repos.createOrUpdateFileContents({
+      ...params,
+      content: Buffer.from(params.content).toString('base64')
+    });
+    
+    return data;
+  }
+  
+  /**
+   * Gets raw content from GitHub
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @param path Path to content
+   * @param ref Git reference (branch, tag, commit)
+   */
+  async getRawContent(owner: string, repo: string, path: string, ref: string = 'main'): Promise<string> {
+    const response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get raw content: ${response.statusText}`);
+    }
+    
+    return await response.text();
+  }
+  
+  /**
+   * Initializes a UOR database repository structure
+   * @param owner Repository owner
+   * @param repo Repository name
+   */
+  async initializeUORDbStructure(owner: string, repo: string) {
+    // Create directories for UOR content types
+    const directories = [
+      'concepts',
+      'resources',
+      'topics',
+      'predicates',
+      'resolvers'
+    ];
+    
+    for (const dir of directories) {
+      await this.createFile({
+        owner,
+        repo,
+        path: `${dir}/.gitkeep`,
+        message: `Initialize ${dir} directory`,
+        content: ''
+      });
+    }
+    
+    // Create README.md
+    await this.createFile({
+      owner,
+      repo,
+      path: 'README.md',
+      message: 'Initialize UOR database',
+      content: `# Universal Object Reference Database\n\nThis repository contains UOR data for the ${owner} namespace.\n`
+    });
+    
+    // Create index.json
+    await this.createFile({
+      owner,
+      repo,
+      path: 'index.json',
+      message: 'Initialize UOR database index',
+      content: JSON.stringify({
+        namespace: owner,
+        name: `${owner} UOR Database`,
+        created: new Date().toISOString(),
+        contentTypes: directories
+      }, null, 2)
+    });
+  }
+}

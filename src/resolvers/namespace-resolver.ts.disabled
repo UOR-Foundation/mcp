@@ -1,0 +1,198 @@
+/**
+ * Namespace resolver for UOR objects
+ * Handles cross-namespace resolution for UOR objects
+ */
+import { UORResolver } from '../core/uor-core';
+import { GitHubNamespaceResolver as CoreGitHubNamespaceResolver } from '../core/uor-implementations';
+import type { GitHubClient } from '../github/github-client';
+
+/**
+ * Interface for resolver record
+ */
+export interface ResolverRecord {
+  id: string;
+  sourceNamespace: string;
+  targetNamespace: string;
+  resolutionMethod: string;
+  dateCreated: string;
+  description?: string;
+}
+
+/**
+ * GitHub-based namespace resolver implementation
+ */
+export class GitHubNamespaceResolver extends CoreGitHubNamespaceResolver {
+  private githubClient: GitHubClient;
+  private resolverCache: Map<string, ResolverRecord[]> = new Map();
+  
+  /**
+   * Creates a new GitHub namespace resolver
+   * @param id Resolver identifier
+   * @param sourceNamespace Source namespace
+   * @param targetNamespace Target namespace
+   * @param githubClient GitHub client instance
+   */
+  constructor(
+    id: string,
+    sourceNamespace: string,
+    targetNamespace: string,
+    githubClient: GitHubClient
+  ) {
+    super(id, sourceNamespace, targetNamespace);
+    this.githubClient = githubClient;
+  }
+  
+  /**
+   * Loads resolver records for a namespace
+   * @param namespace The namespace to load resolvers for
+   * @returns Array of resolver records
+   */
+  async loadResolvers(namespace: string): Promise<ResolverRecord[]> {
+    // Check cache first
+    if (this.resolverCache.has(namespace)) {
+      return this.resolverCache.get(namespace)!;
+    }
+    
+    try {
+      // Load resolvers from GitHub
+      const content = await this.githubClient.getContent(namespace, 'uordb', 'resolvers');
+      
+      if (!Array.isArray(content)) {
+        return [];
+      }
+      
+      const resolvers: ResolverRecord[] = [];
+      
+      // Load each resolver file
+      for (const item of content) {
+        if (item.type === 'file' && item.name.endsWith('.json')) {
+          const resolverContent = await this.githubClient.getRawContent(
+            namespace,
+            'uordb',
+            `resolvers/${item.name}`
+          );
+          
+          const resolver = JSON.parse(resolverContent) as ResolverRecord;
+          resolvers.push(resolver);
+        }
+      }
+      
+      // Cache the resolvers
+      this.resolverCache.set(namespace, resolvers);
+      
+      return resolvers;
+    } catch (error) {
+      console.error(`Failed to load resolvers for ${namespace}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Resolves a reference across multiple namespaces
+   * @param reference The reference to resolve
+   * @param visitedNamespaces Namespaces already visited (to prevent cycles)
+   * @returns The resolved reference or null if not found
+   */
+  async resolveAcrossNamespaces(
+    reference: string,
+    visitedNamespaces: Set<string> = new Set()
+  ): Promise<string | null> {
+    // Parse the reference
+    const referenceUrl = new URL(reference);
+    const namespace = referenceUrl.hostname;
+    
+    // Prevent cycles
+    if (visitedNamespaces.has(namespace)) {
+      return null;
+    }
+    
+    visitedNamespaces.add(namespace);
+    
+    try {
+      // Try to load the reference directly
+      const resolved = this.resolveReference(reference);
+      
+      // Try to fetch the content to verify it exists
+      try {
+        const [, type, id] = referenceUrl.pathname.split('/');
+        await this.githubClient.getRawContent(
+          this.targetNamespace,
+          'uordb',
+          `${type}/${id}.json`
+        );
+        return resolved;
+      } catch (error) {
+        // Content not found in this namespace, try resolvers
+      }
+      
+      // Load resolvers for this namespace
+      const resolvers = await this.loadResolvers(namespace);
+      
+      // Try each resolver
+      for (const resolver of resolvers) {
+        const targetResolver = new GitHubNamespaceResolver(
+          resolver.id,
+          resolver.sourceNamespace,
+          resolver.targetNamespace,
+          this.githubClient
+        );
+        
+        const result = await targetResolver.resolveAcrossNamespaces(
+          reference,
+          new Set(visitedNamespaces)
+        );
+        
+        if (result) {
+          return result;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Failed to resolve across namespaces: ${reference}`, error);
+      return null;
+    }
+  }
+  
+  /**
+   * Creates a new resolver record
+   * @param sourceNamespace Source namespace
+   * @param targetNamespace Target namespace
+   * @param description Optional description
+   * @returns The created resolver record
+   */
+  async createResolver(
+    sourceNamespace: string,
+    targetNamespace: string,
+    description?: string
+  ): Promise<ResolverRecord> {
+    // Create resolver ID
+    const id = `resolver-${targetNamespace.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    
+    // Create resolver record
+    const resolver: ResolverRecord = {
+      id: `urn:uor:resolver:${id}`,
+      sourceNamespace,
+      targetNamespace,
+      resolutionMethod: 'github',
+      dateCreated: new Date().toISOString(),
+      description
+    };
+    
+    // Save resolver to GitHub
+    await this.githubClient.createFile({
+      owner: sourceNamespace,
+      repo: 'uordb',
+      path: `resolvers/${id}.json`,
+      message: `Create resolver for ${targetNamespace}`,
+      content: JSON.stringify(resolver, null, 2)
+    });
+    
+    // Update cache
+    const resolvers = this.resolverCache.get(sourceNamespace) || [];
+    resolvers.push(resolver);
+    this.resolverCache.set(sourceNamespace, resolvers);
+    
+    return resolver;
+  }
+}

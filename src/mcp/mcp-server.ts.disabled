@@ -1,0 +1,710 @@
+/**
+ * MCP Server Implementation for UOR Framework
+ * Implements the Model Context Protocol with UOR as the underlying framework
+ */
+import express from 'express';
+import { UORObject } from '../core/uor-core';
+import { GitHubClient } from '../github/github-client';
+
+/**
+ * Interface for MCP server configuration
+ */
+export interface MCPServerConfig {
+  port: number;
+  clientId: string;
+  clientSecret: string;
+}
+
+/**
+ * MCP Server implementation for UOR
+ */
+export class MCPServer {
+  private app: express.Application;
+  private config: MCPServerConfig;
+  private githubClient?: GitHubClient;
+  
+  /**
+   * Creates a new MCP Server
+   * @param config Server configuration
+   */
+  constructor(config: MCPServerConfig) {
+    this.app = express();
+    this.config = config;
+    
+    this.setupMiddleware();
+    this.setupRoutes();
+  }
+  
+  /**
+   * Sets up Express middleware
+   */
+  private setupMiddleware() {
+    this.app.use(express.json());
+    
+    // CORS support
+    this.app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      
+      if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+      }
+      
+      next();
+    });
+    
+    // GitHub authentication middleware
+    this.app.use('/api', async (req, res, next) => {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      try {
+        this.githubClient = new GitHubClient(token);
+        const user = await this.githubClient.getAuthenticatedUser();
+        (req as any).user = user;
+        next();
+      } catch (error) {
+        console.error('Authentication error:', error);
+        return res.status(401).json({ error: 'Invalid GitHub token' });
+      }
+    });
+  }
+  
+  /**
+   * Sets up Express routes
+   */
+  private setupRoutes() {
+    // MCP protocol endpoint
+    this.app.post('/mcp', this.handleMCPRequest.bind(this));
+    
+    // GitHub auth routes
+    this.app.get('/auth/github', this.handleGitHubAuth.bind(this));
+    this.app.get('/auth/github/callback', this.handleGitHubCallback.bind(this));
+    
+    // API routes
+    this.app.get('/api/concepts', this.handleGetConcepts.bind(this));
+    this.app.get('/api/concepts/:id', this.handleGetConcept.bind(this));
+    this.app.post('/api/concepts', this.handleCreateConcept.bind(this));
+    
+    this.app.get('/api/resources', this.handleGetResources.bind(this));
+    this.app.get('/api/resources/:id', this.handleGetResource.bind(this));
+    this.app.post('/api/resources', this.handleCreateResource.bind(this));
+    
+    this.app.get('/api/topics', this.handleGetTopics.bind(this));
+    this.app.get('/api/topics/:id', this.handleGetTopic.bind(this));
+    this.app.post('/api/topics', this.handleCreateTopic.bind(this));
+    
+    this.app.get('/api/predicates', this.handleGetPredicates.bind(this));
+    this.app.get('/api/predicates/:id', this.handleGetPredicate.bind(this));
+    this.app.post('/api/predicates', this.handleCreatePredicate.bind(this));
+    
+    this.app.get('/api/resolvers', this.handleGetResolvers.bind(this));
+    this.app.post('/api/resolvers', this.handleCreateResolver.bind(this));
+    
+    // Static files
+    this.app.use(express.static('public'));
+    
+    // Default route
+    this.app.get('/', (req, res) => {
+      res.send('MCP Server for UOR Framework');
+    });
+  }
+  
+  /**
+   * Starts the server
+   * @returns Promise that resolves when the server is started
+   */
+  start(): Promise<void> {
+    return new Promise((resolve) => {
+      this.app.listen(this.config.port, () => {
+        console.log(`MCP Server listening on port ${this.config.port}`);
+        resolve();
+      });
+    });
+  }
+  
+  /**
+   * Handles MCP protocol requests
+   */
+  private async handleMCPRequest(req: express.Request, res: express.Response) {
+    try {
+      const message = req.body;
+      
+      // Validate JSON-RPC message
+      if (!message.jsonrpc || message.jsonrpc !== '2.0') {
+        return res.status(400).json({
+          jsonrpc: '2.0',
+          id: message.id || null,
+          error: {
+            code: -32600,
+            message: 'Invalid Request',
+            data: 'The JSON sent is not a valid JSON-RPC 2.0 request'
+          }
+        });
+      }
+      
+      // Handle different request types
+      if (message.method === 'initialize') {
+        return this.handleInitialize(message, res);
+      }
+      
+      if (message.method === 'tools/list') {
+        return this.handleToolsList(message, res);
+      }
+      
+      if (message.method === 'resources/list') {
+        return this.handleResourcesList(message, res);
+      }
+      
+      // Method not found
+      return res.json({
+        jsonrpc: '2.0',
+        id: message.id,
+        error: {
+          code: -32601,
+          message: 'Method not found',
+          data: `The method ${message.method} is not supported`
+        }
+      });
+    } catch (error) {
+      console.error('Error handling MCP request:', error);
+      
+      return res.json({
+        jsonrpc: '2.0',
+        id: req.body.id || null,
+        error: {
+          code: -32603,
+          message: 'Internal error',
+          data: (error as Error).message
+        }
+      });
+    }
+  }
+  
+  /**
+   * Handles MCP initialize request
+   */
+  private handleInitialize(message: any, res: express.Response) {
+    return res.json({
+      jsonrpc: '2.0',
+      id: message.id,
+      result: {
+        protocolVersion: 'DRAFT-2025-v2',
+        serverInfo: {
+          name: 'uor-mcp-server',
+          version: '0.1.0'
+        },
+        capabilities: {
+          resources: {
+            listChanged: true,
+            subscribe: true
+          },
+          tools: {
+            listChanged: true
+          },
+          prompts: {
+            listChanged: true
+          }
+        },
+        instructions: 'This MCP server implements the UOR Framework with GitHub-based storage. You can access UOR objects through resources and manipulate them using tools.'
+      }
+    });
+  }
+  
+  /**
+   * Handles MCP tools/list request
+   */
+  private handleToolsList(message: any, res: express.Response) {
+    return res.json({
+      jsonrpc: '2.0',
+      id: message.id,
+      result: {
+        tools: [
+          {
+            name: 'createConcept',
+            description: 'Creates a new UOR concept',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' }
+              },
+              required: ['name']
+            }
+          },
+          {
+            name: 'createResource',
+            description: 'Creates a new UOR resource',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                content: { type: 'string' }
+              },
+              required: ['name', 'content']
+            }
+          },
+          {
+            name: 'createResolver',
+            description: 'Creates a new namespace resolver',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                targetNamespace: { type: 'string' },
+                description: { type: 'string' }
+              },
+              required: ['targetNamespace']
+            }
+          }
+        ]
+      }
+    });
+  }
+  
+  /**
+   * Handles MCP resources/list request
+   */
+  private handleResourcesList(message: any, res: express.Response) {
+    return res.json({
+      jsonrpc: '2.0',
+      id: message.id,
+      result: {
+        resources: [
+          {
+            uri: 'uor://concepts',
+            name: 'UOR Concepts',
+            description: 'Collection of UOR concepts'
+          },
+          {
+            uri: 'uor://resources',
+            name: 'UOR Resources',
+            description: 'Collection of UOR information resources'
+          },
+          {
+            uri: 'uor://topics',
+            name: 'UOR Topics',
+            description: 'Collection of UOR topics'
+          },
+          {
+            uri: 'uor://predicates',
+            name: 'UOR Predicates',
+            description: 'Collection of UOR fact predicates'
+          }
+        ]
+      }
+    });
+  }
+  
+  /**
+   * GitHub authentication handler
+   */
+  private handleGitHubAuth(req: express.Request, res: express.Response) {
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${this.config.clientId}&scope=repo`;
+    res.redirect(githubAuthUrl);
+  }
+  
+  /**
+   * GitHub callback handler
+   */
+  private async handleGitHubCallback(req: express.Request, res: express.Response) {
+    const code = req.query.code as string;
+    
+    if (!code) {
+      return res.status(400).send('Missing authorization code');
+    }
+    
+    try {
+      // Exchange code for token
+      const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          client_id: this.config.clientId,
+          client_secret: this.config.clientSecret,
+          code
+        })
+      });
+      
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenData.access_token) {
+        return res.status(400).send('Failed to get access token');
+      }
+      
+      // Initialize GitHub client with the token
+      const githubClient = new GitHubClient(tokenData.access_token);
+      const user = await githubClient.getAuthenticatedUser();
+      
+      // Check if the user has a UOR database repository
+      const repo = await githubClient.getOrCreateUORDb(user.login);
+      
+      // Initialize repository structure if needed
+      if (repo.created_at === repo.updated_at) {
+        await githubClient.initializeUORDbStructure(user.login, 'uordb');
+      }
+      
+      // Return success with token
+      return res.json({
+        success: true,
+        token: tokenData.access_token,
+        user: user.login,
+        repo: repo.name
+      });
+    } catch (error) {
+      console.error('GitHub callback error:', error);
+      return res.status(500).send('Error during GitHub authentication');
+    }
+  }
+  
+  // API route handlers
+  
+  private async handleGetConcepts(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      
+      // Get concepts index or directory listing
+      const content = await client.getContent(user.login, 'uordb', 'concepts');
+      
+      res.json({ concepts: Array.isArray(content) ? content : [content] });
+    } catch (error) {
+      console.error('Error getting concepts:', error);
+      res.status(500).json({ error: 'Failed to get concepts' });
+    }
+  }
+  
+  private async handleGetConcept(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const id = req.params.id;
+      
+      // Get concept file
+      const content = await client.getRawContent(user.login, 'uordb', `concepts/${id}.json`);
+      
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error('Error getting concept:', error);
+      res.status(500).json({ error: 'Failed to get concept' });
+    }
+  }
+  
+  private async handleCreateConcept(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const conceptData = req.body;
+      
+      // Validate concept data
+      if (!conceptData.name) {
+        return res.status(400).json({ error: 'Concept name is required' });
+      }
+      
+      // Create concept ID from name
+      const id = conceptData.name.toLowerCase().replace(/\s+/g, '-');
+      
+      // Add UOR metadata
+      const conceptWithMetadata = {
+        ...conceptData,
+        id: `urn:uor:concept:${id}`,
+        '@type': 'DefinedTerm',
+        '@context': 'https://schema.org',
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Create concept file
+      await client.createFile({
+        owner: user.login,
+        repo: 'uordb',
+        path: `concepts/${id}.json`,
+        message: `Create concept: ${conceptData.name}`,
+        content: JSON.stringify(conceptWithMetadata, null, 2)
+      });
+      
+      res.status(201).json(conceptWithMetadata);
+    } catch (error) {
+      console.error('Error creating concept:', error);
+      res.status(500).json({ error: 'Failed to create concept' });
+    }
+  }
+  
+  private async handleGetResources(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      
+      // Get resources index or directory listing
+      const content = await client.getContent(user.login, 'uordb', 'resources');
+      
+      res.json({ resources: Array.isArray(content) ? content : [content] });
+    } catch (error) {
+      console.error('Error getting resources:', error);
+      res.status(500).json({ error: 'Failed to get resources' });
+    }
+  }
+  
+  private async handleGetResource(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const id = req.params.id;
+      
+      // Get resource file
+      const content = await client.getRawContent(user.login, 'uordb', `resources/${id}.json`);
+      
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error('Error getting resource:', error);
+      res.status(500).json({ error: 'Failed to get resource' });
+    }
+  }
+  
+  private async handleCreateResource(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const resourceData = req.body;
+      
+      // Validate resource data
+      if (!resourceData.name || !resourceData.content) {
+        return res.status(400).json({ error: 'Resource name and content are required' });
+      }
+      
+      // Create resource ID from name
+      const id = resourceData.name.toLowerCase().replace(/\s+/g, '-');
+      
+      // Add UOR metadata
+      const resourceWithMetadata = {
+        ...resourceData,
+        id: `urn:uor:resource:${id}`,
+        '@type': 'CreativeWork',
+        '@context': 'https://schema.org',
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Create resource file
+      await client.createFile({
+        owner: user.login,
+        repo: 'uordb',
+        path: `resources/${id}.json`,
+        message: `Create resource: ${resourceData.name}`,
+        content: JSON.stringify(resourceWithMetadata, null, 2)
+      });
+      
+      res.status(201).json(resourceWithMetadata);
+    } catch (error) {
+      console.error('Error creating resource:', error);
+      res.status(500).json({ error: 'Failed to create resource' });
+    }
+  }
+  
+  private async handleGetTopics(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      
+      // Get topics index or directory listing
+      const content = await client.getContent(user.login, 'uordb', 'topics');
+      
+      res.json({ topics: Array.isArray(content) ? content : [content] });
+    } catch (error) {
+      console.error('Error getting topics:', error);
+      res.status(500).json({ error: 'Failed to get topics' });
+    }
+  }
+  
+  private async handleGetTopic(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const id = req.params.id;
+      
+      // Get topic file
+      const content = await client.getRawContent(user.login, 'uordb', `topics/${id}.json`);
+      
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error('Error getting topic:', error);
+      res.status(500).json({ error: 'Failed to get topic' });
+    }
+  }
+  
+  private async handleCreateTopic(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const topicData = req.body;
+      
+      // Validate topic data
+      if (!topicData.name) {
+        return res.status(400).json({ error: 'Topic name is required' });
+      }
+      
+      // Create topic ID from name
+      const id = topicData.name.toLowerCase().replace(/\s+/g, '-');
+      
+      // Add UOR metadata
+      const topicWithMetadata = {
+        ...topicData,
+        id: `urn:uor:topic:${id}`,
+        '@type': 'CreativeWork',
+        '@context': 'https://schema.org',
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Create topic file
+      await client.createFile({
+        owner: user.login,
+        repo: 'uordb',
+        path: `topics/${id}.json`,
+        message: `Create topic: ${topicData.name}`,
+        content: JSON.stringify(topicWithMetadata, null, 2)
+      });
+      
+      res.status(201).json(topicWithMetadata);
+    } catch (error) {
+      console.error('Error creating topic:', error);
+      res.status(500).json({ error: 'Failed to create topic' });
+    }
+  }
+  
+  private async handleGetPredicates(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      
+      // Get predicates index or directory listing
+      const content = await client.getContent(user.login, 'uordb', 'predicates');
+      
+      res.json({ predicates: Array.isArray(content) ? content : [content] });
+    } catch (error) {
+      console.error('Error getting predicates:', error);
+      res.status(500).json({ error: 'Failed to get predicates' });
+    }
+  }
+  
+  private async handleGetPredicate(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const id = req.params.id;
+      
+      // Get predicate file
+      const content = await client.getRawContent(user.login, 'uordb', `predicates/${id}.json`);
+      
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error('Error getting predicate:', error);
+      res.status(500).json({ error: 'Failed to get predicate' });
+    }
+  }
+  
+  private async handleCreatePredicate(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const predicateData = req.body;
+      
+      // Validate predicate data
+      if (!predicateData.name || !predicateData.source || !predicateData.target) {
+        return res.status(400).json({ error: 'Predicate name, source, and target are required' });
+      }
+      
+      // Create predicate ID from components
+      const sourceId = predicateData.source.split(':').pop();
+      const targetId = predicateData.target.split(':').pop();
+      const id = `${sourceId}-${predicateData.name}-${targetId}`;
+      
+      // Add UOR metadata
+      const predicateWithMetadata = {
+        ...predicateData,
+        id: `urn:uor:predicate:${id}`,
+        '@type': 'PropertyValue',
+        '@context': {
+          '@vocab': 'https://schema.org/',
+          'uor': 'https://uorframework.org/'
+        },
+        propertyID: 'uor:predicate',
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Create predicate file
+      await client.createFile({
+        owner: user.login,
+        repo: 'uordb',
+        path: `predicates/${id}.json`,
+        message: `Create predicate: ${predicateData.name}`,
+        content: JSON.stringify(predicateWithMetadata, null, 2)
+      });
+      
+      res.status(201).json(predicateWithMetadata);
+    } catch (error) {
+      console.error('Error creating predicate:', error);
+      res.status(500).json({ error: 'Failed to create predicate' });
+    }
+  }
+  
+  private async handleGetResolvers(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      
+      // Get resolvers index or directory listing
+      const content = await client.getContent(user.login, 'uordb', 'resolvers');
+      
+      res.json({ resolvers: Array.isArray(content) ? content : [content] });
+    } catch (error) {
+      console.error('Error getting resolvers:', error);
+      res.status(500).json({ error: 'Failed to get resolvers' });
+    }
+  }
+  
+  private async handleCreateResolver(req: express.Request, res: express.Response) {
+    try {
+      const user = (req as any).user;
+      const client = this.githubClient!;
+      const resolverData = req.body;
+      
+      // Validate resolver data
+      if (!resolverData.targetNamespace) {
+        return res.status(400).json({ error: 'Target namespace is required' });
+      }
+      
+      // Create resolver ID from target
+      const id = resolverData.targetNamespace.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      // Add UOR metadata
+      const resolverWithMetadata = {
+        ...resolverData,
+        id: `urn:uor:resolver:${id}`,
+        sourceNamespace: user.login,
+        resolutionMethod: 'github',
+        dateCreated: new Date().toISOString()
+      };
+      
+      // Create resolver file
+      await client.createFile({
+        owner: user.login,
+        repo: 'uordb',
+        path: `resolvers/${id}.json`,
+        message: `Create resolver for ${resolverData.targetNamespace}`,
+        content: JSON.stringify(resolverWithMetadata, null, 2)
+      });
+      
+      res.status(201).json(resolverWithMetadata);
+    } catch (error) {
+      console.error('Error creating resolver:', error);
+      res.status(500).json({ error: 'Failed to create resolver' });
+    }
+  }
+}
