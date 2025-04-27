@@ -1,8 +1,5 @@
 /**
  * Tests for MCP JSON-RPC Handler, focusing on the JSON-RPC interface
- *
- * NOTE: We're using this subset of tests because it doesn't depend on the 
- * full implementation of MCPServer. Only testing the MCPJSONRPCHandler.
  */
 import { MCPJSONRPCHandler } from '../mcp-jsonrpc-handler';
 
