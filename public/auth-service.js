@@ -171,44 +171,53 @@ class AuthService {
    * @returns {Promise<object>} Token response
    */
   async exchangeCodeForToken(code) {
-    // In a real implementation, this would call a secure server-side endpoint
-    // Since we're on GitHub Pages, we simulate the exchange for demonstration
+    // For GitHub Pages deployment, we need to use a token exchange proxy
+    // that doesn't expose the client secret
     
-    if (this.config.githubOAuth.tokenExchangeProxy) {
-      // If a token exchange proxy is configured, use it
-      try {
-        const response = await fetch(this.config.githubOAuth.tokenExchangeProxy, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            code: code,
-            client_id: this.config.githubOAuth.clientId,
-            redirect_uri: this.config.githubOAuth.redirectUri
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Token exchange failed: ${response.statusText}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Token exchange error:', error);
-        // Fall back to simulation for demo/development
-      }
+    if (!this.config.githubOAuth.tokenExchangeProxy) {
+      throw new Error('Token exchange proxy is required for production deployment');
     }
     
-    // Simulate a token response for demonstration
-    console.warn('Using simulated token exchange. This is not secure for production.');
-    return {
-      access_token: `simulated_${this.generateRandomString(16)}`,
-      token_type: 'bearer',
-      scope: this.config.githubOAuth.scopes.join(','),
-      refresh_token: `refresh_${this.generateRandomString(16)}`,
-      expires_in: 3600 // 1 hour
-    };
+    try {
+      // Call the token exchange proxy service
+      // This proxy should be a serverless function (e.g., Netlify, Vercel, CloudFlare)
+      // that securely stores the client secret
+      const response = await fetch(this.config.githubOAuth.tokenExchangeProxy, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code: code,
+          client_id: this.config.githubOAuth.clientId,
+          redirect_uri: this.config.githubOAuth.redirectUri
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Token exchange failed: ${errorData.error || response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Token exchange error:', error);
+      
+      // In development mode only, simulate a token response
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.warn('Using simulated token exchange for DEVELOPMENT ONLY. This is not secure for production.');
+        return {
+          access_token: `simulated_${this.generateRandomString(16)}`,
+          token_type: 'bearer',
+          scope: this.config.githubOAuth.scopes.join(','),
+          refresh_token: `refresh_${this.generateRandomString(16)}`,
+          expires_in: 3600 // 1 hour
+        };
+      }
+      
+      // Re-throw the error for production environments
+      throw error;
+    }
   }
   
   /**

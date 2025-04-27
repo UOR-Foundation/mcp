@@ -1,12 +1,14 @@
 /**
  * MCP Protocol Handler
  * Client-side implementation of MCP protocol for GitHub Pages
+ * Implements the Model Context Protocol 2025-03-26 specification
  */
 
 class MCPHandler {
   constructor() {
     this.objectStore = {}; // In-memory object store (for client-side only)
     this.nextRequestId = 1;
+    this.initialized = false;
   }
 
   /**
@@ -26,18 +28,31 @@ class MCPHandler {
     }
 
     try {
+      // Handle batch requests
+      if (Array.isArray(request)) {
+        return this.handleBatchRequest(request);
+      }
+
       // Handle different method types
       switch (request.method) {
         case 'initialize':
           return this.handleInitialize(request);
         
+        case 'notifications/initialized':
+          // Handle client notification
+          console.log('Client initialized notification received');
+          return null; // No response for notifications
+          
+        case 'ping':
+          return this.createSuccessResponse(request.id, {});
+          
         case 'tools/list':
           return this.handleToolsList(request);
         
         case 'resources/list':
           return this.handleResourcesList(request);
           
-        case 'tool/call':
+        case 'tools/call':
           return await this.handleToolCall(request);
         
         // Direct MCP server methods
@@ -72,19 +87,50 @@ class MCPHandler {
   }
 
   /**
+   * Handle batch requests
+   * @param {Array} requests Array of JSON-RPC requests 
+   * @returns {Array} Array of JSON-RPC responses
+   */
+  async handleBatchRequest(requests) {
+    if (!Array.isArray(requests) || requests.length === 0) {
+      return this.createErrorResponse(null, -32600, 'Invalid batch request');
+    }
+
+    const responses = [];
+    
+    // Process each request in the batch
+    for (const request of requests) {
+      // Skip notifications (no response expected)
+      if (!request.id) {
+        continue;
+      }
+      
+      // Process the request
+      const response = await this.handleRequest(request);
+      if (response) {
+        responses.push(response);
+      }
+    }
+    
+    return responses;
+  }
+
+  /**
    * Handles the initialize method
    * @param {Object} request - The initialize request
    * @returns {Object} The initialize response
    */
   handleInitialize(request) {
+    this.initialized = true;
+    
     return {
       jsonrpc: '2.0',
       id: request.id,
       result: {
-        protocolVersion: 'DRAFT-2025-v2',
+        protocolVersion: '2025-03-26',
         serverInfo: {
-          name: 'uor-mcp-client-server',
-          version: '0.1.0'
+          name: 'uor-mcp-server',
+          version: '1.0.0'
         },
         capabilities: {
           resources: {
@@ -95,15 +141,10 @@ class MCPHandler {
             listChanged: true
           },
           prompts: {
-            listChanged: true
-          },
-          repository: {
-            initialize: true,
-            status: true,
-            storage: true
+            listChanged: false
           }
         },
-        instructions: 'This MCP server implements the UOR Framework with GitHub-based storage. You can access UOR objects through resources and manipulate them using tools.'
+        instructions: 'This MCP server implements the UOR Framework with GitHub-based storage. You can access UOR objects through resources and manipulate them using tools. The server maintains trilateral coherence between objects, representations, and observer frames.'
       }
     };
   }
@@ -120,36 +161,107 @@ class MCPHandler {
     
     const tools = [
       {
-        name: 'getConcept',
-        description: 'Gets a UOR concept by ID',
+        name: 'uor.resolve',
+        description: 'Resolves a UOR reference to retrieve the referenced object',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'string' }
+            reference: {
+              type: 'string',
+              description: 'The UOR reference to resolve (format: uor://type/id)'
+            }
           },
-          required: ['id']
+          required: ['reference']
+        },
+        annotations: {
+          readOnlyHint: true,
+          title: 'Resolve UOR Reference'
         }
       },
       {
-        name: 'getResource',
-        description: 'Gets a UOR resource by ID',
+        name: 'uor.create',
+        description: 'Creates a new UOR object and returns its reference',
         inputSchema: {
           type: 'object',
           properties: {
-            id: { type: 'string' }
+            type: {
+              type: 'string',
+              description: 'The type of UOR object to create'
+            },
+            data: {
+              type: 'object',
+              description: 'The data to store in the UOR object'
+            }
           },
-          required: ['id']
+          required: ['type', 'data']
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          title: 'Create UOR Object'
         }
       },
       {
-        name: 'searchUOR',
-        description: 'Searches UOR objects',
+        name: 'uor.update',
+        description: 'Updates an existing UOR object',
         inputSchema: {
           type: 'object',
           properties: {
-            query: { type: 'string' }
+            reference: {
+              type: 'string',
+              description: 'The UOR reference to update (format: uor://type/id)'
+            },
+            data: {
+              type: 'object',
+              description: 'The data to update in the UOR object'
+            }
+          },
+          required: ['reference', 'data']
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          title: 'Update UOR Object'
+        }
+      },
+      {
+        name: 'uor.delete',
+        description: 'Deletes a UOR object',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            reference: {
+              type: 'string',
+              description: 'The UOR reference to delete (format: uor://type/id)'
+            }
+          },
+          required: ['reference']
+        },
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          title: 'Delete UOR Object'
+        }
+      },
+      {
+        name: 'uordb.search',
+        description: 'Searches UOR objects by a query string',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'The search query'
+            }
           },
           required: ['query']
+        },
+        annotations: {
+          readOnlyHint: true,
+          title: 'Search UOR Objects'
         }
       }
     ];
@@ -158,99 +270,47 @@ class MCPHandler {
     if (isAuthenticated) {
       tools.push(
         {
-          name: 'initializeRepository',
-          description: 'Initializes the UOR repository',
+          name: 'uordb.list',
+          description: 'Lists UOR objects of a specific type',
           inputSchema: {
             type: 'object',
-            properties: {},
-            required: []
+            properties: {
+              type: {
+                type: 'string',
+                description: 'The type of UOR objects to list'
+              }
+            },
+            required: ['type']
+          },
+          annotations: {
+            readOnlyHint: true,
+            title: 'List UOR Objects'
           }
         },
         {
-          name: 'getRepositoryStatus',
+          name: 'uordb.status',
           description: 'Gets the status of the UOR repository',
           inputSchema: {
             type: 'object',
             properties: {},
             required: []
+          },
+          annotations: {
+            readOnlyHint: true,
+            title: 'Get Repository Status'
           }
         },
         {
-          name: 'createConcept',
-          description: 'Creates a new UOR concept',
+          name: 'uordb.initialize',
+          description: 'Initializes the UOR repository',
           inputSchema: {
             type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              primeFactors: { type: 'array' },
-              observerFrame: { type: 'object' }
-            },
-            required: ['name']
-          }
-        },
-        {
-          name: 'createResource',
-          description: 'Creates a new UOR resource',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              content: { type: 'string' },
-              primeFactors: { type: 'array' }
-            },
-            required: ['name', 'content']
-          }
-        },
-        {
-          name: 'createTopic',
-          description: 'Creates a new UOR topic',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              relatedConcepts: { type: 'array' }
-            },
-            required: ['name']
-          }
-        },
-        {
-          name: 'createPredicate',
-          description: 'Creates a new UOR predicate',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              domain: { type: 'string' },
-              range: { type: 'string' }
-            },
-            required: ['name', 'domain', 'range']
-          }
-        },
-        {
-          name: 'createResolver',
-          description: 'Creates a new namespace resolver',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              targetNamespace: { type: 'string' },
-              description: { type: 'string' }
-            },
-            required: ['targetNamespace']
-          }
-        },
-        {
-          name: 'listObjects',
-          description: 'Lists UOR objects by type',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              type: { type: 'string', enum: ['concept', 'resource', 'topic', 'predicate', 'resolver'] }
-            },
-            required: ['type']
+            properties: {},
+            required: []
+          },
+          annotations: {
+            readOnlyHint: false,
+            title: 'Initialize Repository'
           }
         }
       );
@@ -260,7 +320,8 @@ class MCPHandler {
       jsonrpc: '2.0',
       id: request.id,
       result: {
-        tools
+        tools,
+        nextCursor: null // No pagination for now
       }
     };
   }
@@ -271,43 +332,79 @@ class MCPHandler {
    * @returns {Object} The resources/list response
    */
   handleResourcesList(request) {
-    // Get user context from local storage
-    const userJson = localStorage.getItem('github-user');
-    const user = userJson ? JSON.parse(userJson) : { login: 'anonymous' };
+    // Get user context from authService
+    let user = { login: 'anonymous' };
+    
+    if (window.authService && window.authService.isAuthenticated()) {
+      const authUser = window.authService.getUser();
+      if (authUser && authUser.login) {
+        user = authUser;
+      }
+    }
     
     const resources = [
       {
         uri: `uor://${user.login}/concepts`,
         name: 'UOR Concepts',
-        description: 'Collection of UOR concepts'
+        description: 'Collection of UOR concepts',
+        mimeType: 'application/json',
+        annotations: {
+          priority: 0.8,
+          audience: ['user', 'assistant']
+        }
       },
       {
         uri: `uor://${user.login}/resources`,
         name: 'UOR Resources',
-        description: 'Collection of UOR information resources'
+        description: 'Collection of UOR information resources',
+        mimeType: 'application/json',
+        annotations: {
+          priority: 0.8,
+          audience: ['user', 'assistant']
+        }
       },
       {
         uri: `uor://${user.login}/topics`,
         name: 'UOR Topics',
-        description: 'Collection of UOR topics'
+        description: 'Collection of UOR topics',
+        mimeType: 'application/json',
+        annotations: {
+          priority: 0.7,
+          audience: ['user', 'assistant']
+        }
       },
       {
         uri: `uor://${user.login}/predicates`,
         name: 'UOR Predicates',
-        description: 'Collection of UOR fact predicates'
-      },
-      {
-        uri: `uor://${user.login}/resolvers`,
-        name: 'UOR Resolvers',
-        description: 'Collection of UOR namespace resolvers'
+        description: 'Collection of UOR fact predicates',
+        mimeType: 'application/json',
+        annotations: {
+          priority: 0.6,
+          audience: ['user', 'assistant']
+        }
       }
     ];
+    
+    // Add repository resource for authenticated users
+    if (window.authService && window.authService.isAuthenticated() && user.login !== 'anonymous') {
+      resources.push({
+        uri: `uor://${user.login}/repository`,
+        name: 'UOR Repository',
+        description: 'GitHub repository for UOR objects',
+        mimeType: 'application/json',
+        annotations: {
+          priority: 0.9,
+          audience: ['user', 'assistant']
+        }
+      });
+    }
     
     return {
       jsonrpc: '2.0',
       id: request.id,
       result: {
-        resources
+        resources,
+        nextCursor: null // No pagination for now
       }
     };
   }
@@ -326,15 +423,12 @@ class MCPHandler {
       ];
       
       if (authRequiredMethods.includes(request.method)) {
-        const token = localStorage.getItem('github-token');
-        const userJson = localStorage.getItem('github-user');
-        
-        if (!token || !userJson) {
+        if (!window.authService || !window.authService.isAuthenticated()) {
           return this.createErrorResponse(
             request.id,
-            401,
-            'Unauthorized',
-            'Authentication required for this operation'
+            -32000, // Authentication Required error code
+            'Authentication required',
+            'This operation requires GitHub authentication'
           );
         }
       }
@@ -360,107 +454,72 @@ class MCPHandler {
   }
 
   /**
-   * Handles tool calls
-   * @param {Object} request - The tool/call request
-   * @returns {Object} The tool/call response
+   * Handles tool calls using the tools/call method
+   * @param {Object} request - The tools/call request
+   * @returns {Object} The tools/call response
    */
   async handleToolCall(request) {
-    const { name, parameters } = request.params;
+    const { name, arguments: args } = request.params;
     
-    // Get auth context from local storage
-    const token = localStorage.getItem('github-token');
-    const userJson = localStorage.getItem('github-user');
-    const user = userJson ? JSON.parse(userJson) : null;
-    
-    // Check if authenticated for auth-required tools
-    const authRequiredTools = [
-      'initializeRepository', 'getRepositoryStatus',
-      'createConcept', 'createResource', 'createTopic', 
-      'createPredicate', 'createResolver', 'listObjects'
-    ];
-    
-    if (authRequiredTools.includes(name) && (!token || !user)) {
+    if (!name) {
       return this.createErrorResponse(
         request.id,
-        401,
-        'Unauthorized',
-        'Authentication required for this operation'
+        -32602,
+        'Invalid params',
+        'Tool name is required'
       );
     }
     
-    // Handle different tool types
     try {
-      let result;
+      // Execute the tool by forwarding to the MCP client
+      const result = await window.mcpClient.sendRequest(name, args);
       
-      switch (name) {
-        case 'getConcept':
-          result = await this.handleGetConcept(parameters.id, user ? user.login : 'anonymous');
-          break;
-          
-        case 'getResource':
-          result = await this.handleGetResource(parameters.id, user ? user.login : 'anonymous');
-          break;
-          
-        case 'searchUOR':
-          result = await this.handleSearchUOR(parameters.query, user ? user.login : 'anonymous');
-          break;
-        
-        case 'initializeRepository':
-          result = await this.handleInitializeRepository(user.login);
-          break;
-          
-        case 'getRepositoryStatus':
-          result = await this.handleGetRepositoryStatus(user.login);
-          break;
-          
-        case 'listObjects':
-          result = await this.handleListObjects(parameters.type, user.login);
-          break;
-          
-        case 'createConcept':
-          result = await this.handleCreateConcept(parameters, user.login);
-          break;
-          
-        case 'createResource':
-          result = await this.handleCreateResource(parameters, user.login);
-          break;
-          
-        case 'createTopic':
-          result = await this.handleCreateTopic(parameters, user.login);
-          break;
-          
-        case 'createPredicate':
-          result = await this.handleCreatePredicate(parameters, user.login);
-          break;
-          
-        case 'createResolver':
-          result = await this.handleCreateResolver(parameters, user.login);
-          break;
-          
-        default:
-          return this.createErrorResponse(
-            request.id,
-            -32601,
-            'Method not found',
-            `The tool ${name} is not supported`
-          );
-      }
-      
+      // Format the result according to MCP protocol
       return {
         jsonrpc: '2.0',
         id: request.id,
-        result
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: typeof result === 'string' ? result : JSON.stringify(result, null, 2)
+            }
+          ],
+          isError: false
+        }
       };
     } catch (error) {
-      console.error(`Error handling tool call ${name}:`, error);
+      console.error(`Error executing tool ${name}:`, error);
       
-      return this.createErrorResponse(
-        request.id,
-        -32603,
-        'Tool execution error',
-        error.message
-      );
+      // Return error in the tool result format (not as a JSON-RPC error)
+      return {
+        jsonrpc: '2.0',
+        id: request.id,
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: `Error executing tool ${name}: ${error.message}`
+            }
+          ],
+          isError: true
+        }
+      };
     }
+  }
+
+  /**
+   * Creates a success response
+   * @param {string|number} id - The request ID
+   * @param {any} result - The result data
+   * @returns {Object} The success response
+   */
+  createSuccessResponse(id, result) {
+    return {
+      jsonrpc: '2.0',
+      id,
+      result: result || {}
+    };
   }
 
   /**
@@ -481,357 +540,6 @@ class MCPHandler {
         data
       }
     };
-  }
-
-  /**
-   * Handles initialize repository operation
-   * @param {string} username - The GitHub username
-   * @returns {Object} Initialization status
-   */
-  async handleInitializeRepository(username) {
-    try {
-      await window.mcpClient.sendRequest('uordb.initialize', {});
-      return { success: true, message: 'Repository initialized successfully' };
-    } catch (error) {
-      console.error('Failed to initialize repository:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles get repository status operation
-   * @param {string} username - The GitHub username
-   * @returns {Object} Repository status
-   */
-  async handleGetRepositoryStatus(username) {
-    try {
-      return await window.mcpClient.sendRequest('uordb.status', {});
-    } catch (error) {
-      console.error('Failed to get repository status:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles list objects operation
-   * @param {string} type - Object type
-   * @param {string} username - The GitHub username
-   * @returns {Array} List of objects
-   */
-  async handleListObjects(type, username) {
-    try {
-      return await window.mcpClient.sendRequest('uordb.list', { type });
-    } catch (error) {
-      console.error(`Failed to list objects of type ${type}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles search UOR operation
-   * @param {string} query - Search query
-   * @param {string} username - The GitHub username
-   * @returns {Array} Search results
-   */
-  async handleSearchUOR(query, username) {
-    try {
-      if (username !== 'anonymous') {
-        return await window.mcpClient.sendRequest('uordb.search', { query });
-      } else {
-        // Simple demo search in object store for anonymous users
-        const results = [];
-        for (const key in this.objectStore) {
-          const obj = this.objectStore[key];
-          const objStr = JSON.stringify(obj).toLowerCase();
-          if (objStr.includes(query.toLowerCase())) {
-            results.push(obj);
-          }
-        }
-        return results;
-      }
-    } catch (error) {
-      console.error('Failed to search UOR objects:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles GET concept operation
-   * @param {string} id - The concept ID
-   * @param {string} namespace - The namespace
-   * @returns {Object} The concept data
-   */
-  async handleGetConcept(id, namespace) {
-    try {
-      // Try to resolve via MCP server
-      if (namespace !== 'anonymous') {
-        const reference = `uor://concept/${id}`;
-        const response = await window.mcpClient.sendRequest('uor.resolve', { reference });
-        if (response) {
-          return response.data;
-        }
-      }
-      
-      // Fallback to memory store
-      const storedConcept = this.objectStore[`concept:${id}`];
-      if (storedConcept) {
-        return storedConcept;
-      }
-      
-      // Not found, return mock concept
-      return {
-        id: `uor://concept/${id}`,
-        type: 'concept',
-        name: id,
-        description: `Concept ${id} in namespace ${namespace}`,
-        dateCreated: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Failed to get concept:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles GET resource operation
-   * @param {string} id - The resource ID
-   * @param {string} namespace - The namespace
-   * @returns {Object} The resource data
-   */
-  async handleGetResource(id, namespace) {
-    try {
-      // Try to resolve via MCP server
-      if (namespace !== 'anonymous') {
-        const reference = `uor://resource/${id}`;
-        const response = await window.mcpClient.sendRequest('uor.resolve', { reference });
-        if (response) {
-          return response.data;
-        }
-      }
-      
-      // Fallback to memory store
-      const storedResource = this.objectStore[`resource:${id}`];
-      if (storedResource) {
-        return storedResource;
-      }
-      
-      // Not found, return mock resource
-      return {
-        id: `uor://resource/${id}`,
-        type: 'resource',
-        name: id,
-        description: `Resource ${id} in namespace ${namespace}`,
-        content: `This is the content of resource ${id}`,
-        dateCreated: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Failed to get resource:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles create concept operation
-   * @param {Object} params - The concept parameters
-   * @param {string} namespace - The namespace
-   * @returns {Object} The created concept
-   */
-  async handleCreateConcept(params, namespace) {
-    try {
-      // Create concept object
-      const concept = {
-        type: 'concept',
-        name: params.name,
-        description: params.description || '',
-        primeFactors: params.primeFactors || [],
-        observerFrame: params.observerFrame || null,
-        canonicalRepresentation: {
-          representationType: 'MinimalEncoding',
-          value: {
-            name: params.name,
-            description: params.description || ''
-          }
-        }
-      };
-      
-      // Create via MCP server
-      const reference = await window.mcpClient.sendRequest('uor.create', {
-        type: 'concept',
-        data: concept
-      });
-      
-      // Return the created concept with its reference
-      return {
-        ...concept,
-        id: reference
-      };
-    } catch (error) {
-      console.error('Failed to create concept:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles create resource operation
-   * @param {Object} params - The resource parameters
-   * @param {string} namespace - The namespace
-   * @returns {Object} The created resource
-   */
-  async handleCreateResource(params, namespace) {
-    try {
-      // Create resource object
-      const resource = {
-        type: 'resource',
-        name: params.name,
-        description: params.description || '',
-        content: params.content,
-        primeFactors: params.primeFactors || [],
-        canonicalRepresentation: {
-          representationType: 'MinimalEncoding',
-          value: {
-            name: params.name,
-            content: params.content
-          }
-        }
-      };
-      
-      // Create via MCP server
-      const reference = await window.mcpClient.sendRequest('uor.create', {
-        type: 'resource',
-        data: resource
-      });
-      
-      // Return the created resource with its reference
-      return {
-        ...resource,
-        id: reference
-      };
-    } catch (error) {
-      console.error('Failed to create resource:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles create topic operation
-   * @param {Object} params - The topic parameters
-   * @param {string} namespace - The namespace
-   * @returns {Object} The created topic
-   */
-  async handleCreateTopic(params, namespace) {
-    try {
-      // Create topic object
-      const topic = {
-        type: 'topic',
-        name: params.name,
-        description: params.description || '',
-        relatedConcepts: params.relatedConcepts || [],
-        canonicalRepresentation: {
-          representationType: 'MinimalEncoding',
-          value: {
-            name: params.name,
-            description: params.description || ''
-          }
-        }
-      };
-      
-      // Create via MCP server
-      const reference = await window.mcpClient.sendRequest('uor.create', {
-        type: 'topic',
-        data: topic
-      });
-      
-      // Return the created topic with its reference
-      return {
-        ...topic,
-        id: reference
-      };
-    } catch (error) {
-      console.error('Failed to create topic:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles create predicate operation
-   * @param {Object} params - The predicate parameters
-   * @param {string} namespace - The namespace
-   * @returns {Object} The created predicate
-   */
-  async handleCreatePredicate(params, namespace) {
-    try {
-      // Create predicate object
-      const predicate = {
-        type: 'predicate',
-        name: params.name,
-        description: params.description || '',
-        domain: params.domain,
-        range: params.range,
-        canonicalRepresentation: {
-          representationType: 'MinimalEncoding',
-          value: {
-            name: params.name,
-            domain: params.domain,
-            range: params.range
-          }
-        }
-      };
-      
-      // Create via MCP server
-      const reference = await window.mcpClient.sendRequest('uor.create', {
-        type: 'predicate',
-        data: predicate
-      });
-      
-      // Return the created predicate with its reference
-      return {
-        ...predicate,
-        id: reference
-      };
-    } catch (error) {
-      console.error('Failed to create predicate:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handles create resolver operation
-   * @param {Object} params - The resolver parameters
-   * @param {string} namespace - The namespace
-   * @returns {Object} The created resolver
-   */
-  async handleCreateResolver(params, namespace) {
-    try {
-      // Create resolver object
-      const resolver = {
-        type: 'resolver',
-        targetNamespace: params.targetNamespace,
-        description: params.description || '',
-        resolutionMethod: 'github',
-        canonicalRepresentation: {
-          representationType: 'MinimalEncoding',
-          value: {
-            targetNamespace: params.targetNamespace,
-            resolutionMethod: 'github'
-          }
-        }
-      };
-      
-      // Create via MCP server
-      const reference = await window.mcpClient.sendRequest('uor.create', {
-        type: 'resolver',
-        data: resolver
-      });
-      
-      // Return the created resolver with its reference
-      return {
-        ...resolver,
-        id: reference
-      };
-    } catch (error) {
-      console.error('Failed to create resolver:', error);
-      throw error;
-    }
   }
 }
 

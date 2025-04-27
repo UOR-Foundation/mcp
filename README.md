@@ -107,16 +107,51 @@ This implementation provides access to the UOR core features:
 
 ## Getting Started
 
+### Local Development
+
 1. Clone this repository: `git clone https://github.com/UOR-Foundation/mcp.git`
 2. Install dependencies: `npm install`
-3. Configure GitHub authentication credentials in `.env` file:
-   ```
-   GITHUB_CLIENT_ID=your_client_id
-   GITHUB_CLIENT_SECRET=your_client_secret
-   ```
-4. Start the MCP server: `npm start`
-5. Connect using any MCP-compatible client to `http://localhost:3000`
-6. For production, deploy to GitHub Pages following the deployment instructions
+3. Start the development server: `npm run dev`
+4. Start the client in development mode: `npm run dev:client`
+5. Access the client at `http://localhost:8080`
+
+### GitHub Pages Deployment
+
+The easiest way to use the MCP server is through our GitHub Pages deployment:
+
+1. Visit [https://UOR-Foundation.github.io/mcp/](https://UOR-Foundation.github.io/mcp/)
+2. Configure the application with your GitHub Client ID and Token Exchange Proxy
+3. Authenticate with GitHub to access your UOR data
+4. Start using the MCP protocol with your LLM applications
+
+### Creating Your Own Deployment
+
+To deploy your own instance:
+
+1. Fork this repository
+2. Create a GitHub OAuth application in your [GitHub Developer Settings](https://github.com/settings/developers)
+   - Set the Authorization Callback URL to `https://your-username.github.io/mcp/auth-callback.html`
+3. Create a token exchange proxy (see [Token Exchange Proxy Guide](docs/token-exchange-proxy.md))
+4. Run the deployment script: `./deploy-to-github-pages.sh`
+5. Access your deployment at `https://your-username.github.io/mcp/`
+
+Alternatively, you can use URL parameters to configure your deployment:
+
+```
+https://your-username.github.io/mcp/?github_client_id=YOUR_CLIENT_ID&token_exchange_proxy=YOUR_PROXY_URL
+```
+
+### Usage with LLM Applications
+
+To use this MCP server with LLM applications:
+
+1. Configure your LLM app to use the MCP endpoint: `https://UOR-Foundation.github.io/mcp/mcp`
+2. Authenticate your users with GitHub
+3. Access UOR objects using the standard MCP protocol methods:
+   - `initialize` - Set up the connection
+   - `tools/list` - List available UOR tools
+   - `resources/list` - List available UOR resources
+   - `tools/call` - Execute UOR operations
 
 ## Repository Structure
 

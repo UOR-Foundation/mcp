@@ -69,6 +69,35 @@
       }
       
       try {
+        // Check if configuration is valid
+        const config = window.MCPConfig.getConfig();
+
+        // Check if we're using the placeholder client ID
+        if (config.githubOAuth.clientId === 'CLIENT_ID_PLACEHOLDER' && window.location.hostname !== 'localhost') {
+          showError('This UOR-Foundation MCP Server instance has not been properly configured yet.');
+          
+          // Show detailed information for administrators
+          const statusElement = document.getElementById('status');
+          statusElement.innerHTML += `
+            <p>If you are the administrator of this deployment, please update the GitHub OAuth client ID during deployment.</p>
+            <p>If you're a user trying to access the UOR MCP Server, please contact the administrators.</p>
+          `;
+          return;
+        }
+        
+        // Check if token exchange proxy is configured
+        if (!config.githubOAuth.tokenExchangeProxy && window.location.hostname !== 'localhost') {
+          showError('Token exchange proxy is not configured. For security reasons, GitHub authentication requires a token exchange proxy in production.');
+          
+          // Show detailed information to help users configure the proxy
+          const statusElement = document.getElementById('status');
+          statusElement.innerHTML += `
+            <p>Please see the <a href="https://github.com/UOR-Foundation/mcp/blob/main/docs/token-exchange-proxy.md" target="_blank">documentation</a> for setting up a token exchange proxy.</p>
+            <p>You can configure it by adding <code>?token_exchange_proxy=https://your-proxy-url.com</code> to your URL.</p>
+          `;
+          return;
+        }
+        
         // Process the authorization using our auth service
         const result = await window.authService.handleCallback(code, state);
         
@@ -92,7 +121,17 @@
         }, 2000);
       } catch (error) {
         console.error('Authentication error:', error);
-        showError(`Failed to complete authentication: ${error.message}`);
+        
+        // Format error message based on type
+        let errorMessage = `Failed to complete authentication: ${error.message}`;
+        
+        if (error.message.includes('Token exchange proxy is required')) {
+          errorMessage = 'Token exchange proxy is required for GitHub authentication. Please configure a proxy to complete the authentication flow.';
+        } else if (error.message.includes('Token exchange failed')) {
+          errorMessage = `GitHub authentication failed: ${error.message}`;
+        }
+        
+        showError(errorMessage);
       }
     }
     

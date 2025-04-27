@@ -6,10 +6,11 @@
 window.MCPConfig = {
   // Default configuration values
   defaultConfig: {
-    // GitHub OAuth configuration
+    // GitHub OAuth configuration - Pre-configured for UOR-Foundation deployment
     githubOAuth: {
-      clientId: '',
+      clientId: 'CLIENT_ID_PLACEHOLDER', // Will be replaced during deployment
       redirectUri: window.location.origin + '/auth-callback.html',
+      tokenExchangeProxy: 'https://uor-foundation-mcp-auth.netlify.app/.netlify/functions/token-exchange',
       scopes: ['repo']
     },
     
@@ -55,6 +56,10 @@ window.MCPConfig = {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('github_client_id')) {
       config.githubOAuth.clientId = urlParams.get('github_client_id');
+    }
+    
+    if (urlParams.has('token_exchange_proxy')) {
+      config.githubOAuth.tokenExchangeProxy = urlParams.get('token_exchange_proxy');
     }
     
     if (urlParams.has('ipfs_gateway')) {
