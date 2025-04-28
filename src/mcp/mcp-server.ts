@@ -1,6 +1,11 @@
 import { UORObject } from '../core/uor-core';
 import { GitHubClient } from '../github/github-client';
 import { UORDBManager } from '../github/uordb-manager';
+import PubSubManager from '../pubsub/pubsub-manager';
+import { EventBase, EventPriority, Channel, ChannelVisibility, ChannelSubscription } from '../pubsub/event-types';
+import { EventObject } from '../pubsub/event';
+import { ChannelObject } from '../pubsub/channel';
+import { ChannelSubscriptionObject } from '../pubsub/subscription';
 
 // Custom interface for stored UOR objects
 interface StoredUORObject {
@@ -14,8 +19,12 @@ export class MCPServer {
   private static instance: MCPServer;
   private uordbManager: UORDBManager | null = null;
   private currentUser: { username: string, token: string } | null = null;
+  private pubSubManager: typeof PubSubManager;
 
-  private constructor() {}
+  private constructor() {
+    // Initialize pubsub manager
+    this.pubSubManager = PubSubManager;
+  }
 
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -108,6 +117,22 @@ export class MCPServer {
         return this.getRepositoryStatus();
       case 'uordb.initialize':
         return this.initializeRepository();
+      case 'pubsub.createEvent':
+        return this.createEvent(params.data, params.id);
+      case 'pubsub.createChannel':
+        return this.createChannel(params.data, params.id);
+      case 'pubsub.createSubscription':
+        return this.createSubscription(params.data, params.id);
+      case 'pubsub.updateEvent':
+        return this.updateEvent(params.reference, params.data);
+      case 'pubsub.updateChannel':
+        return this.updateChannel(params.reference, params.data);
+      case 'pubsub.updateSubscription':
+        return this.updateSubscription(params.reference, params.data);
+      case 'pubsub.publishEvent':
+        return this.publishEvent(params.eventReference, params.channelReference);
+      case 'pubsub.propagateEvent':
+        return this.propagateEvent(params.eventReference, params.targetNamespaces);
       case 'setAuthentication':
         this.setAuthentication(params.username, params.token);
         return true;
@@ -263,6 +288,297 @@ export class MCPServer {
     }
 
     return await this.uordbManager.searchObjects(this.currentUser.username, query);
+  }
+
+  /**
+   * Creates a new event
+   * @param id Unique event ID (optional, generated if not provided)
+   * @param data Event data
+   * @returns The UOR reference to the created event
+   */
+  private async createEvent(data: Partial<EventBase>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const eventId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.publisher) {
+      data.publisher = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    // Create event object
+    const event = this.pubSubManager.createEvent(eventId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, event);
+    
+    return `uor://event/${eventId}`;
+  }
+  
+  /**
+   * Creates a new channel
+   * @param id Unique channel ID (optional, generated if not provided)
+   * @param data Channel data
+   * @returns The UOR reference to the created channel
+   */
+  private async createChannel(data: Partial<Channel>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const channelId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.createdBy) {
+      data.createdBy = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    if (!data.namespace) {
+      data.namespace = this.currentUser.username;
+    }
+    
+    // Create channel object
+    const channel = this.pubSubManager.createChannel(channelId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, channel);
+    
+    return `uor://channel/${channelId}`;
+  }
+  
+  /**
+   * Creates a new subscription
+   * @param id Unique subscription ID (optional, generated if not provided)
+   * @param data Subscription data
+   * @returns The UOR reference to the created subscription
+   */
+  private async createSubscription(data: Partial<ChannelSubscription>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const subscriptionId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.subscriber) {
+      data.subscriber = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    // Create subscription object
+    const subscription = this.pubSubManager.createSubscription(subscriptionId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, subscription);
+    
+    return `uor://subscription/${subscriptionId}`;
+  }
+  
+  /**
+   * Updates an existing event
+   * @param reference UOR reference to the event
+   * @param data Updated event data
+   * @returns Whether the update was successful
+   */
+  private async updateEvent(reference: string, data: Partial<EventBase>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'event') {
+      throw new Error(`Not an event object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Event not found: ${reference}`);
+    }
+    
+    // Update the event
+    const updatedObject = this.pubSubManager.updateEvent(existingObject as EventObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Updates an existing channel
+   * @param reference UOR reference to the channel
+   * @param data Updated channel data
+   * @returns Whether the update was successful
+   */
+  private async updateChannel(reference: string, data: Partial<Channel>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'channel') {
+      throw new Error(`Not a channel object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Channel not found: ${reference}`);
+    }
+    
+    // Update the channel
+    const updatedObject = this.pubSubManager.updateChannel(existingObject as ChannelObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Updates an existing subscription
+   * @param reference UOR reference to the subscription
+   * @param data Updated subscription data
+   * @returns Whether the update was successful
+   */
+  private async updateSubscription(reference: string, data: Partial<ChannelSubscription>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'subscription') {
+      throw new Error(`Not a subscription object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Subscription not found: ${reference}`);
+    }
+    
+    // Update the subscription
+    const updatedObject = this.pubSubManager.updateSubscription(existingObject as ChannelSubscriptionObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Publishes an event to a channel
+   * @param eventReference UOR reference to the event
+   * @param channelReference UOR reference to the channel
+   * @returns Whether the publication was successful
+   */
+  private async publishEvent(eventReference: string, channelReference: string): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract event ID from the reference
+    const eventParts = eventReference.split('/');
+    const eventType = eventParts[2]; // Assuming format uor://type/id
+    const eventId = eventParts.slice(3).join('/');
+    
+    if (eventType !== 'event') {
+      throw new Error(`Not an event object: ${eventReference}`);
+    }
+    
+    // Extract channel ID from the reference
+    const channelParts = channelReference.split('/');
+    const channelType = channelParts[2]; // Assuming format uor://type/id
+    const channelId = channelParts.slice(3).join('/');
+    
+    if (channelType !== 'channel') {
+      throw new Error(`Not a channel object: ${channelReference}`);
+    }
+    
+    // Get existing event
+    const existingEvent = await this.uordbManager.getObject(this.currentUser.username, eventType, eventId);
+    
+    if (!existingEvent) {
+      throw new Error(`Event not found: ${eventReference}`);
+    }
+    
+    // Get existing channel
+    const existingChannel = await this.uordbManager.getObject(this.currentUser.username, channelType, channelId);
+    
+    if (!existingChannel) {
+      throw new Error(`Channel not found: ${channelReference}`);
+    }
+    
+    const subscriptions = await this.uordbManager.listObjects(this.currentUser.username, 'subscription');
+    const channelSubscriptions = subscriptions
+      .filter(sub => sub.type === 'channel-subscription')
+      .map(sub => new ChannelSubscriptionObject(sub.id, sub.data));
+    
+    const matchingSubscribers = this.pubSubManager.getMatchingSubscribers(
+      existingChannel as ChannelObject,
+      channelSubscriptions
+    );
+    
+    await this.pubSubManager.publishEvent(
+      existingEvent as EventObject,
+      existingChannel as ChannelObject,
+      matchingSubscribers
+    );
+    
+    return true;
+  }
+  
+  /**
+   * Propagates an event across namespaces
+   * @param eventReference UOR reference to the event
+   * @param targetNamespaces Target namespaces to propagate to
+   * @returns Whether the propagation was successful
+   */
+  private async propagateEvent(eventReference: string, targetNamespaces: string[]): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract event ID from the reference
+    const eventParts = eventReference.split('/');
+    const eventType = eventParts[2]; // Assuming format uor://type/id
+    const eventId = eventParts.slice(3).join('/');
+    
+    if (eventType !== 'event') {
+      throw new Error(`Not an event object: ${eventReference}`);
+    }
+    
+    // Get existing event
+    const existingEvent = await this.uordbManager.getObject(this.currentUser.username, eventType, eventId);
+    
+    if (!existingEvent) {
+      throw new Error(`Event not found: ${eventReference}`);
+    }
+    
+    await this.pubSubManager.propagateEventAcrossNamespaces(
+      existingEvent as EventObject,
+      this.currentUser.username,
+      targetNamespaces
+    );
+    
+    return true;
   }
 }
 
