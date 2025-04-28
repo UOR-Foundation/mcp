@@ -1,6 +1,11 @@
 import { UORObject } from '../core/uor-core';
 import { GitHubClient } from '../github/github-client';
 import { UORDBManager } from '../github/uordb-manager';
+import MessageManager from '../messaging/message-manager';
+import { MessageBase, MessageThread, MessageSubscription, MessageStatus, MessagePriority } from '../messaging/message-types';
+import { MessageObject } from '../messaging/message';
+import { ThreadObject } from '../messaging/thread';
+import { SubscriptionObject } from '../messaging/subscription';
 
 // Custom interface for stored UOR objects
 interface StoredUORObject {
@@ -14,8 +19,12 @@ export class MCPServer {
   private static instance: MCPServer;
   private uordbManager: UORDBManager | null = null;
   private currentUser: { username: string, token: string } | null = null;
+  private messageManager: typeof MessageManager;
 
-  private constructor() {}
+  private constructor() {
+    // Initialize message manager
+    this.messageManager = MessageManager;
+  }
 
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -108,6 +117,24 @@ export class MCPServer {
         return this.getRepositoryStatus();
       case 'uordb.initialize':
         return this.initializeRepository();
+      case 'messaging.createMessage':
+        return this.createMessage(params.data, params.id);
+      case 'messaging.createThread':
+        return this.createThread(params.data, params.id);
+      case 'messaging.createSubscription':
+        return this.createSubscription(params.data, params.id);
+      case 'messaging.updateMessage':
+        return this.updateMessage(params.reference, params.data);
+      case 'messaging.updateThread':
+        return this.updateThread(params.reference, params.data);
+      case 'messaging.updateSubscription':
+        return this.updateSubscription(params.reference, params.data);
+      case 'messaging.setMessageStatus':
+        return this.setMessageStatus(params.reference, params.status);
+      case 'messaging.publishMessage':
+        return this.publishMessage(params.reference);
+      case 'messaging.addMessageToThread':
+        return this.addMessageToThread(params.threadReference, params.messageReference);
       case 'setAuthentication':
         this.setAuthentication(params.username, params.token);
         return true;
@@ -263,6 +290,321 @@ export class MCPServer {
     }
 
     return await this.uordbManager.searchObjects(this.currentUser.username, query);
+  }
+
+  /**
+   * Creates a new message
+   * @param id Unique message ID (optional, generated if not provided)
+   * @param data Message data
+   * @returns The UOR reference to the created message
+   */
+  private async createMessage(data: Partial<MessageBase>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const messageId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.sender) {
+      data.sender = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    // Create message object
+    const message = this.messageManager.createMessage(messageId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, message);
+    
+    return `uor://message/${messageId}`;
+  }
+  
+  /**
+   * Creates a new thread
+   * @param id Unique thread ID (optional, generated if not provided)
+   * @param data Thread data
+   * @returns The UOR reference to the created thread
+   */
+  private async createThread(data: Partial<MessageThread>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const threadId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.createdBy) {
+      data.createdBy = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    // Create thread object
+    const thread = this.messageManager.createThread(threadId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, thread);
+    
+    return `uor://thread/${threadId}`;
+  }
+  
+  /**
+   * Creates a new subscription
+   * @param id Unique subscription ID (optional, generated if not provided)
+   * @param data Subscription data
+   * @returns The UOR reference to the created subscription
+   */
+  private async createSubscription(data: Partial<MessageSubscription>, id?: string): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Generate ID if not provided
+    const subscriptionId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (!data.subscriber) {
+      data.subscriber = `uor://identity/${this.currentUser.username}`;
+    }
+    
+    // Create subscription object
+    const subscription = this.messageManager.createSubscription(subscriptionId, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, subscription);
+    
+    return `uor://subscription/${subscriptionId}`;
+  }
+  
+  /**
+   * Updates a message
+   * @param reference UOR reference to the message
+   * @param data Updated message data
+   * @returns Whether the update was successful
+   */
+  private async updateMessage(reference: string, data: Partial<MessageBase>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'message') {
+      throw new Error(`Not a message object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Message not found: ${reference}`);
+    }
+    
+    // Update the message
+    const updatedObject = this.messageManager.updateMessage(existingObject as MessageObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Updates a thread
+   * @param reference UOR reference to the thread
+   * @param data Updated thread data
+   * @returns Whether the update was successful
+   */
+  private async updateThread(reference: string, data: Partial<MessageThread>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'thread') {
+      throw new Error(`Not a thread object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Thread not found: ${reference}`);
+    }
+    
+    // Update the thread
+    const updatedObject = this.messageManager.updateThread(existingObject as ThreadObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Updates a subscription
+   * @param reference UOR reference to the subscription
+   * @param data Updated subscription data
+   * @returns Whether the update was successful
+   */
+  private async updateSubscription(reference: string, data: Partial<MessageSubscription>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'subscription') {
+      throw new Error(`Not a subscription object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Subscription not found: ${reference}`);
+    }
+    
+    // Update the subscription
+    const updatedObject = this.messageManager.updateSubscription(existingObject as SubscriptionObject, data);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Sets the status of a message
+   * @param reference UOR reference to the message
+   * @param status New message status
+   * @returns Whether the update was successful
+   */
+  private async setMessageStatus(reference: string, status: MessageStatus): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'message') {
+      throw new Error(`Not a message object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Message not found: ${reference}`);
+    }
+    
+    // Update the message status
+    const updatedObject = this.messageManager.setMessageStatus(existingObject as MessageObject, status);
+    
+    // Store in repository
+    await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
+    
+    return true;
+  }
+  
+  /**
+   * Publishes a message to recipients
+   * @param reference UOR reference to the message
+   * @returns Whether the publication was successful
+   */
+  private async publishMessage(reference: string): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract ID from the reference
+    const parts = reference.split('/');
+    const type = parts[2]; // Assuming format uor://type/id
+    const id = parts.slice(3).join('/');
+    
+    if (type !== 'message') {
+      throw new Error(`Not a message object: ${reference}`);
+    }
+    
+    // Get existing object
+    const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
+    
+    if (!existingObject) {
+      throw new Error(`Message not found: ${reference}`);
+    }
+    
+    await this.messageManager.publishMessage(existingObject as MessageObject);
+    
+    await this.uordbManager.storeObject(this.currentUser.username, existingObject);
+    
+    return true;
+  }
+  
+  /**
+   * Adds a message to a thread
+   * @param threadReference UOR reference to the thread
+   * @param messageReference UOR reference to the message
+   * @returns Whether the operation was successful
+   */
+  private async addMessageToThread(threadReference: string, messageReference: string): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Extract thread ID from the reference
+    const threadParts = threadReference.split('/');
+    const threadType = threadParts[2]; // Assuming format uor://type/id
+    const threadId = threadParts.slice(3).join('/');
+    
+    if (threadType !== 'thread') {
+      throw new Error(`Not a thread object: ${threadReference}`);
+    }
+    
+    // Extract message ID from the reference
+    const messageParts = messageReference.split('/');
+    const messageType = messageParts[2]; // Assuming format uor://type/id
+    const messageId = messageParts.slice(3).join('/');
+    
+    if (messageType !== 'message') {
+      throw new Error(`Not a message object: ${messageReference}`);
+    }
+    
+    // Get existing thread
+    const existingThread = await this.uordbManager.getObject(this.currentUser.username, threadType, threadId);
+    
+    if (!existingThread) {
+      throw new Error(`Thread not found: ${threadReference}`);
+    }
+    
+    // Get existing message
+    const existingMessage = await this.uordbManager.getObject(this.currentUser.username, messageType, messageId);
+    
+    if (!existingMessage) {
+      throw new Error(`Message not found: ${messageReference}`);
+    }
+    
+    const updatedThread = this.messageManager.addMessageToThread(existingThread as ThreadObject, messageReference);
+    
+    // Update message with thread reference if not already set
+    const messageData = (existingMessage as MessageObject).getMessageData();
+    if (!messageData.threadId) {
+      (existingMessage as MessageObject).updateMessage({ threadId: threadReference });
+      await this.uordbManager.storeObject(this.currentUser.username, existingMessage);
+    }
+    
+    await this.uordbManager.storeObject(this.currentUser.username, updatedThread);
+    
+    return true;
   }
 }
 
