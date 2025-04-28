@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://uor-foundation.org/schemas/uor-core.schema.json",
+  "title": "UOR Core Schema",
+  "description": "Core schema for Universal Object Reference (UOR) objects",
+  "type": "object",
+  "required": ["id", "type", "canonicalRepresentation", "observerFrame"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the UOR object",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of the UOR object",
+      "enum": ["concept", "resource", "topic", "predicate", "resolver", "media"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the UOR object"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the UOR object"
+    },
+    "canonicalRepresentation": {
+      "type": "object",
+      "description": "Base-independent representation of the object",
+      "required": ["format", "content"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Format of the canonical representation",
+          "enum": ["json", "text", "binary", "reference"]
+        },
+        "content": {
+          "description": "Content of the canonical representation",
+          "oneOf": [
+            { "type": "object" },
+            { "type": "string" },
+            { "type": "array" }
+          ]
+        },
+        "encoding": {
+          "type": "string",
+          "description": "Encoding used for binary content",
+          "enum": ["base64", "hex", "utf8"]
+        }
+      }
+    },
+    "primeDecomposition": {
+      "type": "array",
+      "description": "Factorization of the object into irreducible components",
+      "items": {
+        "type": "object",
+        "required": ["factor", "multiplicity"],
+        "properties": {
+          "factor": {
+            "type": "string",
+            "description": "Reference to a prime factor"
+          },
+          "multiplicity": {
+            "type": "integer",
+            "description": "Number of times the factor appears in the decomposition",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "observerFrame": {
+      "type": "object",
+      "description": "Frame of reference for observing the object",
+      "required": ["id", "perspective"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identifier for the observer frame"
+        },
+        "perspective": {
+          "type": "string",
+          "description": "Perspective from which the object is viewed",
+          "enum": ["objective", "subjective", "intersubjective"]
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Additional parameters for the observer frame"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the UOR object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Creator of the UOR object"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Last updater of the UOR object"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the UOR object"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags associated with the UOR object",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

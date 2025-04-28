@@ -1,6 +1,8 @@
 import { UORObject } from '../core/uor-core';
 import { GitHubClient } from '../github/github-client';
 import { UORDBManager } from '../github/uordb-manager';
+import { SchemaIntegration } from '../schema/schema-integration';
+import { UORCoreSchema } from '../schema/schema-types';
 
 // Custom interface for stored UOR objects
 interface StoredUORObject {
@@ -14,8 +16,12 @@ export class MCPServer {
   private static instance: MCPServer;
   private uordbManager: UORDBManager | null = null;
   private currentUser: { username: string, token: string } | null = null;
+  private schemaIntegration: SchemaIntegration | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Initialize schema integration
+    this.schemaIntegration = SchemaIntegration.getInstance();
+  }
 
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -164,6 +170,15 @@ export class MCPServer {
       ...data
     };
     
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(uorObject);
+      } catch (error: any) {
+        console.error('Schema validation failed for UOR object:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
+    
     // Store in GitHub if authenticated
     if (this.uordbManager && this.currentUser) {
       await this.uordbManager.storeObject(this.currentUser.username, uorObject);
@@ -197,6 +212,15 @@ export class MCPServer {
           id: reference,
           type: type
         };
+        
+        if (this.schemaIntegration) {
+          try {
+            this.schemaIntegration.conformUORObject(updatedObject);
+          } catch (error: any) {
+            console.error('Schema validation failed for updated UOR object:', error);
+            throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+          }
+        }
         
         await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
         return true;

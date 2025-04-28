@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://uor-foundation.org/schemas/uor-axioms.schema.json",
+  "title": "UOR Axioms Schema",
+  "description": "Schema defining the axioms for Universal Object Reference (UOR) framework",
+  "type": "object",
+  "required": ["axioms"],
+  "properties": {
+    "axioms": {
+      "type": "array",
+      "description": "List of axioms that define the UOR framework",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "statement", "category"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the axiom",
+            "pattern": "^[a-zA-Z0-9-_]+$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the axiom"
+          },
+          "statement": {
+            "type": "string",
+            "description": "Formal statement of the axiom"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the axiom",
+            "enum": ["trilateral-coherence", "unique-factorization", "canonical-representation", "coherence-measure"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the axiom"
+          },
+          "implications": {
+            "type": "array",
+            "description": "Implications of the axiom",
+            "items": {
+              "type": "string"
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "Examples illustrating the axiom",
+            "items": {
+              "type": "object",
+              "required": ["description", "example"],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Description of the example"
+                },
+                "example": {
+                  "description": "Example data illustrating the axiom",
+                  "oneOf": [
+                    { "type": "object" },
+                    { "type": "string" },
+                    { "type": "array" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "trilateralCoherence": {
+      "type": "object",
+      "description": "Trilateral coherence axioms",
+      "required": ["objects", "representations", "observerFrames"],
+      "properties": {
+        "objects": {
+          "type": "object",
+          "description": "Object-related coherence constraints",
+          "required": ["uniqueIdentity", "consistentType"],
+          "properties": {
+            "uniqueIdentity": {
+              "type": "boolean",
+              "description": "Objects must have unique identities",
+              "enum": [true]
+            },
+            "consistentType": {
+              "type": "boolean",
+              "description": "Objects must have consistent types across representations",
+              "enum": [true]
+            }
+          }
+        },
+        "representations": {
+          "type": "object",
+          "description": "Representation-related coherence constraints",
+          "required": ["canonicalForm", "transformability"],
+          "properties": {
+            "canonicalForm": {
+              "type": "boolean",
+              "description": "Representations must have a canonical form",
+              "enum": [true]
+            },
+            "transformability": {
+              "type": "boolean",
+              "description": "Representations must be transformable between observer frames",
+              "enum": [true]
+            }
+          }
+        },
+        "observerFrames": {
+          "type": "object",
+          "description": "Observer frame-related coherence constraints",
+          "required": ["uniquePerspective", "frameTransformations"],
+          "properties": {
+            "uniquePerspective": {
+              "type": "boolean",
+              "description": "Observer frames must provide unique perspectives",
+              "enum": [true]
+            },
+            "frameTransformations": {
+              "type": "boolean",
+              "description": "Frame transformations must preserve object identity",
+              "enum": [true]
+            }
+          }
+        }
+      }
+    },
+    "uniqueFactorization": {
+      "type": "object",
+      "description": "Unique factorization axioms",
+      "required": ["existence", "uniqueness"],
+      "properties": {
+        "existence": {
+          "type": "boolean",
+          "description": "Every UOR object has a prime decomposition",
+          "enum": [true]
+        },
+        "uniqueness": {
+          "type": "boolean",
+          "description": "The prime decomposition is unique up to ordering",
+          "enum": [true]
+        }
+      }
+    },
+    "canonicalRepresentation": {
+      "type": "object",
+      "description": "Canonical representation axioms",
+      "required": ["existence", "uniqueness", "consistency"],
+      "properties": {
+        "existence": {
+          "type": "boolean",
+          "description": "Every UOR object has a canonical representation",
+          "enum": [true]
+        },
+        "uniqueness": {
+          "type": "boolean",
+          "description": "The canonical representation is unique for each object",
+          "enum": [true]
+        },
+        "consistency": {
+          "type": "boolean",
+          "description": "The canonical representation is consistent across observer frames",
+          "enum": [true]
+        }
+      }
+    },
+    "coherenceMeasure": {
+      "type": "object",
+      "description": "Coherence measure axioms",
+      "required": ["existence", "nonNegativity", "identity", "symmetry", "triangleInequality"],
+      "properties": {
+        "existence": {
+          "type": "boolean",
+          "description": "A coherence measure exists for any pair of UOR objects",
+          "enum": [true]
+        },
+        "nonNegativity": {
+          "type": "boolean",
+          "description": "The coherence measure is non-negative",
+          "enum": [true]
+        },
+        "identity": {
+          "type": "boolean",
+          "description": "The coherence measure is zero if and only if the objects are identical",
+          "enum": [true]
+        },
+        "symmetry": {
+          "type": "boolean",
+          "description": "The coherence measure is symmetric",
+          "enum": [true]
+        },
+        "triangleInequality": {
+          "type": "boolean",
+          "description": "The coherence measure satisfies the triangle inequality",
+          "enum": [true]
+        }
+      }
+    }
+  }
+}
