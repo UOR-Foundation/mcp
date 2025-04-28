@@ -35,16 +35,36 @@ export class UORDBManager {
   }
 
   async initialize(username: string): Promise<void> {
-    const exists = await this.repositoryService.checkRepositoryExists(username);
+    // Check if repository exists and user has access
+    const accessStatus = await this.repositoryService.checkRepositoryAccess(username);
     
-    if (!exists) {
-      await this.repositoryService.createRepository(username);
+    if (!accessStatus.exists) {
+      // Create repository if it doesn't exist
+      const created = await this.repositoryService.createRepository(username);
+      if (!created) {
+        throw new Error('Failed to create UOR repository. Please check your GitHub account settings.');
+      }
+    } else if (!accessStatus.hasWriteAccess) {
+      // Repository exists but user doesn't have write access
+      throw new Error(
+        'No write access to the repository. Please check your GitHub permissions. ' +
+        'You need push access to the repository to use UOR features.'
+      );
     }
     
-    const hasAccess = await this.repositoryService.verifyRepositoryAccess(username);
-    if (!hasAccess) {
-      throw new Error('No write access to the repository. Please check your GitHub permissions.');
+    // Verify repository structure even if it exists
+    const structureVerification = await this.repositoryService.verifyRepositoryStructure(username);
+    if (!structureVerification.isValid) {
+      console.log('Repository structure is incomplete, repairing...');
+      // Repository service will handle repairs
+      const repaired = await this.repositoryService.createRepository(username);
+      if (!repaired) {
+        throw new Error('Failed to repair repository structure. Some features may not work correctly.');
+      }
     }
+    
+    // Update the last sync time
+    await this.syncRepositoryTime(username);
   }
 
   async getRepositoryStatus(username: string) {

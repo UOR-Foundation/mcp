@@ -58,7 +58,36 @@ export class MCPServer {
       throw new Error('Not authenticated');
     }
 
-    return this.uordbManager.getRepositoryStatus(this.currentUser.username);
+    try {
+      return await this.uordbManager.getRepositoryStatus(this.currentUser.username);
+    } catch (error) {
+      // Check if repository exists before throwing error
+      const exists = await this.checkRepositoryExists();
+      if (!exists) {
+        throw new Error('Repository does not exist. Please initialize it first.');
+      }
+      throw error;
+    }
+  }
+  
+  /**
+   * Check if the repository exists for the current user
+   * @returns Whether repository exists
+   */
+  public async checkRepositoryExists(): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const accessStatus = await (this.uordbManager as any).repositoryService.checkRepositoryAccess(
+        this.currentUser.username
+      );
+      return accessStatus.exists;
+    } catch (error) {
+      console.error('Error checking repository existence:', error);
+      return false;
+    }
   }
 
   public async handleRequest(method: string, params: any): Promise<any> {

@@ -34,10 +34,25 @@ jest.mock('../repository-service', () => {
     RepositoryService: jest.fn().mockImplementation(() => {
       return {
         checkRepositoryExists: jest.fn().mockResolvedValue(true),
-        createRepository: jest.fn().mockResolvedValue(undefined),
+        checkRepositoryAccess: jest.fn().mockResolvedValue({
+          exists: true,
+          hasWriteAccess: true,
+          permissions: {
+            admin: false,
+            push: true,
+            pull: true
+          }
+        }),
+        createRepository: jest.fn().mockResolvedValue(true),
         verifyRepositoryAccess: jest.fn().mockResolvedValue(true),
+        verifyRepositoryStructure: jest.fn().mockResolvedValue({
+          isValid: true,
+          missingDirectories: [],
+          missingFiles: []
+        }),
         getRepositoryStatus: jest.fn().mockResolvedValue({
           name: 'uordb',
+          owner: 'test-user',
           creationDate: new Date(),
           lastSyncTime: new Date(),
           objectCounts: {
@@ -98,18 +113,29 @@ describe('UORdb Manager', () => {
     
     // Verify repository service methods were called
     const repoService = (uordbManager as any).repositoryService;
-    expect(repoService.checkRepositoryExists).toHaveBeenCalledWith('test-user');
-    expect(repoService.verifyRepositoryAccess).toHaveBeenCalledWith('test-user');
+    expect(repoService.checkRepositoryAccess).toHaveBeenCalledWith('test-user');
+    expect(repoService.verifyRepositoryStructure).toHaveBeenCalledWith('test-user');
     
     // If repo doesn't exist, it should create it
-    repoService.checkRepositoryExists.mockResolvedValueOnce(false);
+    repoService.checkRepositoryAccess.mockResolvedValueOnce({
+      exists: false,
+      hasWriteAccess: false
+    });
     await uordbManager.initialize('test-user');
     expect(repoService.createRepository).toHaveBeenCalledWith('test-user');
   });
   
   test('should reject initialization if no write access', async () => {
     const repoService = (uordbManager as any).repositoryService;
-    repoService.verifyRepositoryAccess.mockResolvedValueOnce(false);
+    repoService.checkRepositoryAccess.mockResolvedValueOnce({
+      exists: true,
+      hasWriteAccess: false,
+      permissions: {
+        admin: false,
+        push: false,
+        pull: true
+      }
+    });
     
     await expect(uordbManager.initialize('test-user'))
       .rejects

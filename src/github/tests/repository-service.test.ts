@@ -12,6 +12,8 @@ const mockGetFile = jest.fn();
 const mockCreateOrUpdateFile = jest.fn();
 const mockListFiles = jest.fn();
 const mockSetOwner = jest.fn();
+const mockRequest = jest.fn();
+const mockDeleteFile = jest.fn();
 
 jest.mock('../github-client', () => {
   return {
@@ -22,7 +24,9 @@ jest.mock('../github-client', () => {
         getFile: mockGetFile,
         createOrUpdateFile: mockCreateOrUpdateFile,
         listFiles: mockListFiles,
-        setOwner: mockSetOwner
+        setOwner: mockSetOwner,
+        request: mockRequest,
+        deleteFile: mockDeleteFile
       };
     })
   };
@@ -42,6 +46,17 @@ describe('Repository Service', () => {
     mockCreateOrUpdateFile.mockResolvedValue(true);
     mockListFiles.mockResolvedValue([]);
     mockSetOwner.mockImplementation(() => {});
+    mockRequest.mockResolvedValue({
+      name: 'uordb',
+      owner: 'test-user',
+      created_at: '2023-01-01T00:00:00Z',
+      permissions: {
+        admin: false,
+        push: true,
+        pull: true
+      }
+    });
+    mockDeleteFile.mockResolvedValue(true);
     
     githubClient = new GitHubClient();
     repositoryService = new RepositoryService(githubClient);
@@ -89,13 +104,24 @@ describe('Repository Service', () => {
     expect(indexCall).toBe(true);
   });
   
+  test('should check repository access status', async () => {
+    mockRepositoryExists.mockResolvedValueOnce(true);
+    
+    const accessStatus = await repositoryService.checkRepositoryAccess('test-user');
+    
+    expect(mockSetOwner).toHaveBeenCalledWith('test-user');
+    expect(mockRepositoryExists).toHaveBeenCalled();
+    expect(mockRequest).toHaveBeenCalled();
+    expect(accessStatus.exists).toBe(true);
+    expect(accessStatus.hasWriteAccess).toBe(true);
+  });
+  
   test('should verify repository access', async () => {
     mockRepositoryExists.mockResolvedValueOnce(true);
     
     const hasAccess = await repositoryService.verifyRepositoryAccess('test-user');
     
     expect(mockSetOwner).toHaveBeenCalledWith('test-user');
-    expect(mockRepositoryExists).toHaveBeenCalled();
     expect(hasAccess).toBe(true);
   });
   
@@ -119,6 +145,18 @@ describe('Repository Service', () => {
         lastSync: testDate.toISOString()
       }),
       sha: 'index-sha'
+    });
+
+    // Mock GitHub API repository details
+    mockRequest.mockResolvedValueOnce({
+      name: 'uordb',
+      owner: { login: 'test-user' },
+      created_at: testDate.toISOString(),
+      permissions: {
+        admin: false,
+        push: true,
+        pull: true
+      }
     });
     
     // Mock directory counts
@@ -144,6 +182,7 @@ describe('Repository Service', () => {
     
     expect(status).toEqual({
       name: 'uordb',
+      owner: 'test-user',
       creationDate: testDate,
       lastSyncTime: testDate,
       objectCounts: {
@@ -179,11 +218,55 @@ describe('Repository Service', () => {
     );
   });
   
-  test('should throw error if index.json not found', async () => {
+  test('should throw error if index.json not found and repository does not exist', async () => {
     mockGetFile.mockResolvedValueOnce(null);
+    mockRepositoryExists.mockResolvedValueOnce(false);
     
     await expect(repositoryService.getRepositoryStatus('test-user'))
       .rejects
-      .toThrow('Repository index.json not found');
+      .toThrow('Repository not found or not accessible');
+  });
+  
+  test('should create a default status if index.json not found but repository exists', async () => {
+    const testDate = new Date('2023-01-01T00:00:00Z');
+    
+    // Mock that index.json is not found
+    mockGetFile.mockResolvedValueOnce(null);
+    
+    // But repository exists
+    mockRepositoryExists.mockResolvedValueOnce(true);
+    
+    // Mock GitHub API repository details
+    mockRequest.mockResolvedValueOnce({
+      name: 'uordb',
+      owner: { login: 'test-user' },
+      created_at: testDate.toISOString(),
+      permissions: {
+        admin: false,
+        push: true,
+        pull: true
+      }
+    });
+    
+    // Mock directory counts
+    mockListFiles.mockImplementation((path) => {
+      return Promise.resolve([{ type: 'file', name: '.gitkeep' }]);
+    });
+    
+    const status = await repositoryService.getRepositoryStatus('test-user');
+    
+    expect(status).toEqual({
+      name: 'uordb',
+      owner: 'test-user',
+      creationDate: testDate,
+      lastSyncTime: expect.any(Date),
+      objectCounts: {
+        concepts: 0,
+        resources: 0,
+        topics: 0,
+        predicates: 0,
+        resolvers: 0
+      }
+    });
   });
 });

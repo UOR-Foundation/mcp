@@ -121,6 +121,10 @@ export interface MCPResource {
   mimeType?: string;
   annotations?: MCPAnnotations;
   size?: number;
+  // Extended properties for UOR resources
+  metadata?: Record<string, any>;
+  count?: number;
+  [key: string]: any; // Allow additional properties
 }
 
 // General annotations

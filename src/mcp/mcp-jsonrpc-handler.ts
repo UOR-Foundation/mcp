@@ -11,7 +11,8 @@ import {
   JSONRPC_VERSION,
   MCP_PROTOCOL_VERSION,
   RequestId,
-  MCPImplementation
+  MCPImplementation,
+  MCPResource
 } from './mcp-jsonrpc';
 // Import the MCPServer
 import MCPServer from './mcp-server';
@@ -394,7 +395,7 @@ Resources are available using the uor:// scheme.
     const username = this.mcpServer.getCurrentUsername();
     
     // Define basic resource types
-    const resources = [
+    const resources: MCPResource[] = [
       {
         name: 'UOR Object',
         description: 'A Universal Object Reference (UOR) object',
@@ -411,12 +412,45 @@ Resources are available using the uor:// scheme.
     
     // Add user-specific resources if authenticated
     if (isAuthenticated && username) {
-      resources.push({
-        name: 'User Repository',
-        description: `GitHub repository for user ${username}`,
-        uri: `uor://repository/${username}`,
-        mimeType: 'application/json'
-      });
+      // Get repository status for detailed information
+      try {
+        const repoStatus = await this.mcpServer.getRepositoryStatus();
+        
+        resources.push({
+          name: 'User Repository',
+          description: `GitHub repository for user ${username}`,
+          uri: `uor://repository/${username}`,
+          mimeType: 'application/json',
+          metadata: {
+            creationDate: repoStatus.creationDate,
+            lastSyncTime: repoStatus.lastSyncTime,
+            objectCounts: repoStatus.objectCounts
+          }
+        });
+        
+        // Add collection resources for each type based on what's available
+        const types = Object.keys(repoStatus.objectCounts);
+        for (const type of types) {
+          if (repoStatus.objectCounts[type] > 0) {
+            resources.push({
+              name: `${type.charAt(0).toUpperCase() + type.slice(1)} Collection`,
+              description: `Collection of ${type} objects in your repository`,
+              uri: `uor://repository/${username}/collection/${type}`,
+              mimeType: 'application/json',
+              count: repoStatus.objectCounts[type]
+            });
+          }
+        }
+        
+      } catch (error) {
+        // If repository doesn't exist yet, just add basic repository resource
+        resources.push({
+          name: 'User Repository',
+          description: `GitHub repository for user ${username}`,
+          uri: `uor://repository/${username}`,
+          mimeType: 'application/json'
+        });
+      }
     }
     
     return {
