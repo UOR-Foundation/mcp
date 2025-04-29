@@ -10,7 +10,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      parser: tseslint.parser,
+      parser: tseslint.parser(),
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.test.json'],
       },
