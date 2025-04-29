@@ -3,7 +3,14 @@
  * Implements message objects in the UOR system
  */
 
-import { UORObject, CanonicalRepresentation, PrimeDecomposition, ObserverFrame, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
+import {
+  UORObject,
+  CanonicalRepresentation,
+  PrimeDecomposition,
+  ObserverFrame,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
 import { MessageBase, MessageStatus, MessagePriority, MessageUORObject } from './message-types';
 
 /**
@@ -19,7 +26,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
    */
   constructor(id: string, data: Partial<MessageBase>) {
     super(id, 'message');
-    
+
     this.data = {
       id: id,
       sender: data.sender || '',
@@ -31,7 +38,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
       createdAt: data.createdAt || new Date(),
       updatedAt: data.updatedAt || new Date(),
       encrypted: data.encrypted || false,
-      ...data
+      ...data,
     };
   }
 
@@ -51,7 +58,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
     this.data = {
       ...this.data,
       ...message,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -62,7 +69,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
   setStatus(status: MessageStatus): void {
     this.data.status = status;
     this.data.updatedAt = new Date();
-    
+
     switch (status) {
       case MessageStatus.SENT:
         this.data.sentAt = new Date();
@@ -84,7 +91,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
     if (!this.data.tags) {
       this.data.tags = [];
     }
-    
+
     if (!this.data.tags.includes(tag)) {
       this.data.tags.push(tag);
       this.data.updatedAt = new Date();
@@ -111,7 +118,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
     this.data.encrypted = true;
     this.data.encryptionMetadata = {
       algorithm,
-      keyId
+      keyId,
     };
     this.data.updatedAt = new Date();
   }
@@ -124,7 +131,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
     if (!this.data.encrypted) {
       return this.data.content;
     }
-    
+
     return this.data.content;
   }
 
@@ -148,62 +155,62 @@ export class MessageObject extends UORObject implements MessageUORObject {
       {
         id: `message:${this.id}`,
         value: { id: this.id, type: 'message' },
-        domain: 'message'
+        domain: 'message',
       },
       {
         id: `message:sender:${this.data.sender}`,
         value: { sender: this.data.sender },
-        domain: 'message.sender'
+        domain: 'message.sender',
       },
       {
         id: `message:content:${this.hashContent()}`,
         value: { contentHash: this.hashContent() },
-        domain: 'message.content'
+        domain: 'message.content',
       },
       {
         id: `message:status:${this.data.status}`,
         value: { status: this.data.status },
-        domain: 'message.status'
-      }
+        domain: 'message.status',
+      },
     ];
-    
+
     this.data.recipients.forEach(recipient => {
       primeFactors.push({
         id: `message:recipient:${recipient}`,
         value: { recipient },
-        domain: 'message.recipient'
+        domain: 'message.recipient',
       });
     });
-    
+
     if (this.data.threadId) {
       primeFactors.push({
         id: `message:thread:${this.data.threadId}`,
         value: { threadId: this.data.threadId },
-        domain: 'message.thread'
+        domain: 'message.thread',
       });
     }
-    
+
     if (this.data.parentMessageId) {
       primeFactors.push({
         id: `message:parent:${this.data.parentMessageId}`,
         value: { parentMessageId: this.data.parentMessageId },
-        domain: 'message.parent'
+        domain: 'message.parent',
       });
     }
-    
+
     if (this.data.tags && this.data.tags.length > 0) {
       this.data.tags.forEach(tag => {
         primeFactors.push({
           id: `message:tag:${tag}`,
           value: { tag },
-          domain: 'message.tag'
+          domain: 'message.tag',
         });
       });
     }
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'message-decomposition'
+      decompositionMethod: 'message-decomposition',
     };
   }
 
@@ -238,13 +245,13 @@ export class MessageObject extends UORObject implements MessageUORObject {
       readAt: this.data.readAt?.toISOString(),
       tags: this.data.tags ? [...this.data.tags].sort() : [],
       encrypted: this.data.encrypted,
-      encryptionMetadata: this.data.encryptionMetadata
+      encryptionMetadata: this.data.encryptionMetadata,
     };
-    
+
     return {
       representationType: 'message-canonical',
       value: canonicalData,
-      coherenceNorm: this.measureCoherence().value
+      coherenceNorm: this.measureCoherence().value,
     };
   }
 
@@ -254,23 +261,23 @@ export class MessageObject extends UORObject implements MessageUORObject {
    */
   measureCoherence(): CoherenceMeasure {
     let coherenceScore = 0;
-    
+
     if (this.data.sender) coherenceScore += 0.1;
     if (this.data.recipients.length > 0) coherenceScore += 0.1;
     if (this.data.content && this.data.content.length > 0) coherenceScore += 0.2;
-    
+
     if (this.data.threadId) coherenceScore += 0.1;
     if (this.data.parentMessageId) coherenceScore += 0.1;
-    
+
     if (this.data.status !== MessageStatus.DRAFT) coherenceScore += 0.1;
     if (this.data.sentAt) coherenceScore += 0.1;
     if (this.data.deliveredAt) coherenceScore += 0.1;
     if (this.data.readAt) coherenceScore += 0.1;
-    
+
     return {
       type: 'message-coherence',
       value: coherenceScore,
-      normalization: 'linear-sum'
+      normalization: 'linear-sum',
     };
   }
 
@@ -288,11 +295,12 @@ export class MessageObject extends UORObject implements MessageUORObject {
         updatedAt: this.data.updatedAt.toISOString(),
         sentAt: this.data.sentAt?.toISOString(),
         deliveredAt: this.data.deliveredAt?.toISOString(),
-        readAt: this.data.readAt?.toISOString()
+        readAt: this.data.readAt?.toISOString(),
       },
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
       primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
-      observerFrame: this.observerFrame
+      observerFrame: this.observerFrame,
     };
   }
 
@@ -304,19 +312,19 @@ export class MessageObject extends UORObject implements MessageUORObject {
     if (!this.data.id || this.data.id !== this.id) {
       return false;
     }
-    
+
     if (!this.data.sender || this.data.sender.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.recipients || this.data.recipients.length === 0) {
       return false;
     }
-    
+
     if (!this.data.content || this.data.content.trim() === '') {
       return false;
     }
-    
+
     return true;
   }
 
@@ -329,8 +337,8 @@ export class MessageObject extends UORObject implements MessageUORObject {
       {
         id: 'message:core',
         value: { type: 'message' },
-        domain: 'message'
-      }
+        domain: 'message',
+      },
     ];
   }
 }

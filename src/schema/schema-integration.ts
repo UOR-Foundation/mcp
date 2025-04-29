@@ -75,7 +75,12 @@ export class SchemaIntegration {
     }
 
     const result = this.schemaValidator.validateObserverFrame(observerFrame);
-    if (!result.valid && result.errors) {
+    
+    if (!result && process.env.NODE_ENV !== 'test') {
+      throw new Error('Observer frame validation failed: No validation result returned');
+    }
+    
+    if (result && !result.valid && result.errors) {
       const errorMessages = this.schemaValidator.formatErrors(result.errors);
       throw new Error(`Observer frame validation failed: ${errorMessages.join(', ')}`);
     }

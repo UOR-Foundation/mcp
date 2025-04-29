@@ -3,7 +3,14 @@
  * Implements resource objects in the UOR system
  */
 
-import { UORObject, ObserverFrame, PrimeDecomposition, CanonicalRepresentation, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
+import {
+  UORObject,
+  ObserverFrame,
+  PrimeDecomposition,
+  CanonicalRepresentation,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
 import { ContentType, ResourceContent, ContentUORObject } from './content-types';
 
 /**
@@ -11,7 +18,7 @@ import { ContentType, ResourceContent, ContentUORObject } from './content-types'
  */
 export class ResourceObject extends UORObject implements ContentUORObject {
   private content: ResourceContent;
-  
+
   /**
    * Creates a new resource object
    * @param id Unique identifier
@@ -21,7 +28,7 @@ export class ResourceObject extends UORObject implements ContentUORObject {
     super(id, ContentType.RESOURCE);
     this.content = content;
   }
-  
+
   /**
    * Gets the resource content data
    * @returns The resource content
@@ -29,7 +36,7 @@ export class ResourceObject extends UORObject implements ContentUORObject {
   getContentData(): ResourceContent {
     return this.content;
   }
-  
+
   /**
    * Adds a tag to the resource
    * @param tag Tag to add
@@ -38,13 +45,13 @@ export class ResourceObject extends UORObject implements ContentUORObject {
     if (!this.content.tags) {
       this.content.tags = [];
     }
-    
+
     if (!this.content.tags.includes(tag)) {
       this.content.tags.push(tag);
       this.content.updatedAt = new Date();
     }
   }
-  
+
   /**
    * Removes a tag from the resource
    * @param tag Tag to remove
@@ -52,14 +59,14 @@ export class ResourceObject extends UORObject implements ContentUORObject {
   removeTag(tag: string): void {
     if (this.content.tags) {
       const index = this.content.tags.indexOf(tag);
-      
+
       if (index !== -1) {
         this.content.tags.splice(index, 1);
         this.content.updatedAt = new Date();
       }
     }
   }
-  
+
   /**
    * Updates the resource content
    * @param data Updated resource data
@@ -68,10 +75,10 @@ export class ResourceObject extends UORObject implements ContentUORObject {
     this.content = {
       ...this.content,
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
-  
+
   /**
    * Transforms this object to a different observer frame
    * @param newFrame The new observer frame to transform to
@@ -79,20 +86,20 @@ export class ResourceObject extends UORObject implements ContentUORObject {
    */
   transformToFrame(newFrame: ObserverFrame): UORObject {
     const transformedResource = new ResourceObject(this.id, { ...this.content });
-    
+
     transformedResource.setObserverFrame(newFrame);
-    
+
     if (this.canonicalRepresentation) {
       transformedResource.setCanonicalRepresentation(this.canonicalRepresentation);
     }
-    
+
     if (this.primeDecomposition) {
       transformedResource.setPrimeDecomposition(this.primeDecomposition);
     }
-    
+
     return transformedResource;
   }
-  
+
   /**
    * Measures the coherence of this object's representation
    * This quantifies the representational integrity
@@ -101,10 +108,10 @@ export class ResourceObject extends UORObject implements ContentUORObject {
     return {
       type: 'resource-coherence',
       value: 1.0, // Perfect coherence for resource objects
-      normalization: 'identity'
+      normalization: 'identity',
     };
   }
-  
+
   /**
    * Validates this object against its schema
    * @returns Whether the object is valid
@@ -113,10 +120,10 @@ export class ResourceObject extends UORObject implements ContentUORObject {
     if (!this.content.title || !this.content.url || !this.content.type) {
       return false;
     }
-    
+
     return true;
   }
-  
+
   /**
    * Gets the intrinsic prime factors for this object's domain
    * @returns Array of prime factors that are intrinsic to this domain
@@ -126,11 +133,11 @@ export class ResourceObject extends UORObject implements ContentUORObject {
       {
         id: 'resource:base',
         value: { type: 'resource' },
-        domain: 'resource'
-      }
+        domain: 'resource',
+      },
     ];
   }
-  
+
   /**
    * Computes the prime decomposition of this resource
    */
@@ -139,23 +146,23 @@ export class ResourceObject extends UORObject implements ContentUORObject {
       primeFactors: [
         {
           id: `resource:${this.id}`,
-          value: { 
-            title: this.content.title, 
+          value: {
+            title: this.content.title,
             url: this.content.url,
-            type: this.content.type
+            type: this.content.type,
           },
-          domain: 'resource'
+          domain: 'resource',
         },
         ...(this.content.authors || []).map(author => ({
           id: `attribution:${this.id}:${author}`,
           value: { type: 'author', source: this.id, target: author },
-          domain: 'attribution'
-        }))
+          domain: 'attribution',
+        })),
       ],
-      decompositionMethod: 'resource-attribution'
+      decompositionMethod: 'resource-attribution',
     };
   }
-  
+
   /**
    * Computes the canonical representation of this resource
    */
@@ -167,11 +174,11 @@ export class ResourceObject extends UORObject implements ContentUORObject {
         title: this.content.title,
         url: this.content.url,
         type: this.content.type,
-        format: this.content.format
-      }
+        format: this.content.format,
+      },
     };
   }
-  
+
   /**
    * Serializes this resource to a JSON representation
    */
@@ -180,8 +187,9 @@ export class ResourceObject extends UORObject implements ContentUORObject {
       id: this.id,
       type: this.type,
       content: this.content,
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
-      primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition()
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
     };
   }
 }

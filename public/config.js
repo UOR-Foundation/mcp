@@ -89,7 +89,7 @@ window.MCPConfig = {
   // Merge configurations
   mergeConfig: function(target, source) {
     for (const key in source) {
-      if (source.hasOwnProperty(key)) {
+      if (Object.hasOwn(source, key)) {
         if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
           if (!target[key]) target[key] = {};
           this.mergeConfig(target[key], source[key]);

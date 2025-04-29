@@ -13,7 +13,7 @@ export enum MessageStatus {
   SENT = 'sent',
   DELIVERED = 'delivered',
   READ = 'read',
-  FAILED = 'failed'
+  FAILED = 'failed',
 }
 
 /**
@@ -23,7 +23,7 @@ export enum MessagePriority {
   LOW = 'low',
   NORMAL = 'normal',
   HIGH = 'high',
-  URGENT = 'urgent'
+  URGENT = 'urgent',
 }
 
 /**
@@ -31,14 +31,14 @@ export enum MessagePriority {
  */
 export interface MessageBase {
   id: string;
-  sender: string;       // UOR reference to sender identity
+  sender: string; // UOR reference to sender identity
   recipients: string[]; // UOR references to recipient identities
   subject?: string;
   content: string;
-  contentType: string;  // MIME type of content
+  contentType: string; // MIME type of content
   status: MessageStatus;
   priority: MessagePriority;
-  threadId?: string;    // UOR reference to thread
+  threadId?: string; // UOR reference to thread
   parentMessageId?: string; // UOR reference to parent message in thread
   createdAt: Date;
   updatedAt: Date;
@@ -61,10 +61,10 @@ export interface MessageThread {
   id: string;
   title: string;
   participants: string[]; // UOR references to participant identities
-  messageIds: string[];   // UOR references to messages in thread
+  messageIds: string[]; // UOR references to messages in thread
   createdAt: Date;
   updatedAt: Date;
-  createdBy: string;      // UOR reference to creator identity
+  createdBy: string; // UOR reference to creator identity
   tags?: string[];
 }
 
@@ -73,16 +73,16 @@ export interface MessageThread {
  */
 export interface MessageSubscription {
   id: string;
-  subscriber: string;    // UOR reference to subscriber identity
+  subscriber: string; // UOR reference to subscriber identity
   criteria: {
-    senders?: string[];  // UOR references to sender identities
-    topics?: string[];   // Topics to subscribe to
-    pattern?: string;    // Pattern matching for messages
+    senders?: string[]; // UOR references to sender identities
+    topics?: string[]; // Topics to subscribe to
+    pattern?: string; // Pattern matching for messages
     [key: string]: any;
   };
   notificationPreferences: {
     enabled: boolean;
-    method: string;      // Notification method (e.g., 'email', 'in-app')
+    method: string; // Notification method (e.g., 'email', 'in-app')
     [key: string]: any;
   };
   createdAt: Date;
@@ -122,6 +122,8 @@ export interface ThreadUORObject extends UORObject {
 export interface SubscriptionUORObject extends UORObject {
   getSubscriptionData(): MessageSubscription;
   updateSubscription(subscription: Partial<MessageSubscription>): void;
-  updateNotificationPreferences(preferences: Partial<MessageSubscription['notificationPreferences']>): void;
+  updateNotificationPreferences(
+    preferences: Partial<MessageSubscription['notificationPreferences']>
+  ): void;
   updateCriteria(criteria: Partial<MessageSubscription['criteria']>): void;
 }

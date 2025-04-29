@@ -3,7 +3,15 @@
  * Manages content objects in the UOR system
  */
 
-import { ContentType, ContentBase, ConceptContent, ResourceContent, TopicContent, PredicateContent, MediaContent } from './content-types';
+import {
+  ContentType,
+  ContentBase,
+  ConceptContent,
+  ResourceContent,
+  TopicContent,
+  PredicateContent,
+  MediaContent,
+} from './content-types';
 import { ConceptObject } from './concept';
 import { ResourceObject } from './resource';
 import { TopicObject } from './topic';
@@ -17,7 +25,7 @@ import { UORObject } from '../core/uor-core';
  */
 class ContentManager {
   private static instance: ContentManager;
-  
+
   /**
    * Gets the singleton instance
    * @returns The content manager instance
@@ -28,12 +36,12 @@ class ContentManager {
     }
     return ContentManager.instance;
   }
-  
+
   /**
    * Private constructor for singleton pattern
    */
   private constructor() {}
-  
+
   /**
    * Creates a concept object
    * @param id Unique identifier
@@ -43,7 +51,7 @@ class ContentManager {
   createConcept(id: string, data: ConceptContent): ConceptObject {
     return new ConceptObject(id, data);
   }
-  
+
   /**
    * Creates a resource object
    * @param id Unique identifier
@@ -53,7 +61,7 @@ class ContentManager {
   createResource(id: string, data: ResourceContent): ResourceObject {
     return new ResourceObject(id, data);
   }
-  
+
   /**
    * Creates a topic object
    * @param id Unique identifier
@@ -63,7 +71,7 @@ class ContentManager {
   createTopic(id: string, data: TopicContent): TopicObject {
     return new TopicObject(id, data);
   }
-  
+
   /**
    * Creates a predicate object
    * @param id Unique identifier
@@ -73,7 +81,7 @@ class ContentManager {
   createPredicate(id: string, data: PredicateContent): PredicateObject {
     return new PredicateObject(id, data);
   }
-  
+
   /**
    * Creates a media object
    * @param id Unique identifier
@@ -83,7 +91,7 @@ class ContentManager {
   createMedia(id: string, data: MediaContent): MediaObject {
     return new MediaObject(id, data);
   }
-  
+
   /**
    * Updates content object
    * @param object Content object to update
@@ -110,10 +118,10 @@ class ContentManager {
       default:
         throw new Error(`Unknown content type: ${object.type}`);
     }
-    
+
     return object;
   }
-  
+
   /**
    * Adds a tag to a content object
    * @param object Content object to tag
@@ -132,10 +140,10 @@ class ContentManager {
       default:
         throw new Error(`Cannot add tag to object of type: ${object.type}`);
     }
-    
+
     return object;
   }
-  
+
   /**
    * Removes a tag from a content object
    * @param object Content object to untag
@@ -154,10 +162,10 @@ class ContentManager {
       default:
         throw new Error(`Cannot remove tag from object of type: ${object.type}`);
     }
-    
+
     return object;
   }
-  
+
   /**
    * Adds content to a media object
    * @param object Media object

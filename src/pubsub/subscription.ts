@@ -3,7 +3,14 @@
  * Implements subscription objects in the UOR system
  */
 
-import { UORObject, CanonicalRepresentation, PrimeDecomposition, ObserverFrame, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
+import {
+  UORObject,
+  CanonicalRepresentation,
+  PrimeDecomposition,
+  ObserverFrame,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
 import { ChannelSubscription, SubscriptionUORObject } from './event-types';
 
 /**
@@ -19,7 +26,7 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
    */
   constructor(id: string, data: Partial<ChannelSubscription>) {
     super(id, 'channel-subscription');
-    
+
     this.data = {
       id: id,
       channelId: data.channelId || '',
@@ -30,9 +37,9 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
       active: data.active !== undefined ? data.active : true,
       notificationPreferences: data.notificationPreferences || {
         enabled: true,
-        method: 'in-app'
+        method: 'in-app',
       },
-      ...data
+      ...data,
     };
   }
 
@@ -52,7 +59,7 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
     this.data = {
       ...this.data,
       ...subscription,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -63,7 +70,7 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
   updateCriteria(criteria: Partial<Record<string, any>>): void {
     this.data.criteria = {
       ...this.data.criteria,
-      ...criteria
+      ...criteria,
     };
     this.data.updatedAt = new Date();
   }
@@ -72,10 +79,12 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
    * Updates notification preferences
    * @param preferences Updated notification preferences
    */
-  updateNotificationPreferences(preferences: Partial<ChannelSubscription['notificationPreferences']>): void {
+  updateNotificationPreferences(
+    preferences: Partial<ChannelSubscription['notificationPreferences']>
+  ): void {
     this.data.notificationPreferences = {
       ...this.data.notificationPreferences,
-      ...preferences
+      ...preferences,
     };
     this.data.updatedAt = new Date();
   }
@@ -109,54 +118,54 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
       {
         id: `subscription:${this.id}`,
         value: { id: this.id, type: 'channel-subscription' },
-        domain: 'subscription'
+        domain: 'subscription',
       },
       {
         id: `subscription:channel:${this.data.channelId}`,
         value: { channelId: this.data.channelId },
-        domain: 'subscription.channel'
+        domain: 'subscription.channel',
       },
       {
         id: `subscription:subscriber:${this.data.subscriber}`,
         value: { subscriber: this.data.subscriber },
-        domain: 'subscription.subscriber'
+        domain: 'subscription.subscriber',
       },
       {
         id: `subscription:active:${this.data.active}`,
         value: { active: this.data.active },
-        domain: 'subscription.active'
-      }
+        domain: 'subscription.active',
+      },
     ];
-    
+
     Object.entries(this.data.criteria).forEach(([key, value]) => {
       if (Array.isArray(value)) {
         value.forEach(item => {
           primeFactors.push({
             id: `subscription:criteria:${key}:${item}`,
             value: { [key]: item },
-            domain: 'subscription.criteria'
+            domain: 'subscription.criteria',
           });
         });
       } else if (value) {
         primeFactors.push({
           id: `subscription:criteria:${key}:${value}`,
           value: { [key]: value },
-          domain: 'subscription.criteria'
+          domain: 'subscription.criteria',
         });
       }
     });
-    
+
     Object.entries(this.data.notificationPreferences).forEach(([key, value]) => {
       primeFactors.push({
         id: `subscription:notification:${key}:${value}`,
         value: { [key]: value },
-        domain: 'subscription.notification'
+        domain: 'subscription.notification',
       });
     });
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'subscription-decomposition'
+      decompositionMethod: 'subscription-decomposition',
     };
   }
 
@@ -173,13 +182,13 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
       createdAt: this.data.createdAt.toISOString(),
       updatedAt: this.data.updatedAt.toISOString(),
       active: this.data.active,
-      notificationPreferences: { ...this.data.notificationPreferences }
+      notificationPreferences: { ...this.data.notificationPreferences },
     };
-    
+
     return {
       representationType: 'subscription-canonical',
       value: canonicalData,
-      coherenceNorm: this.measureCoherence().value
+      coherenceNorm: this.measureCoherence().value,
     };
   }
 
@@ -189,19 +198,19 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
    */
   private canonicalizeCriteria(): object {
     const result: Record<string, any> = {};
-    
+
     const sortedKeys = Object.keys(this.data.criteria).sort();
-    
+
     for (const key of sortedKeys) {
       const value = this.data.criteria[key];
-      
+
       if (Array.isArray(value)) {
         result[key] = [...value].sort();
       } else {
         result[key] = value;
       }
     }
-    
+
     return result;
   }
 
@@ -211,24 +220,24 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
    */
   measureCoherence(): CoherenceMeasure {
     let coherenceScore = 0;
-    
+
     if (this.data.id) coherenceScore += 0.1;
     if (this.data.channelId) coherenceScore += 0.1;
     if (this.data.subscriber) coherenceScore += 0.1;
-    
+
     const criteriaCount = Object.keys(this.data.criteria).length;
     coherenceScore += Math.min(0.3, criteriaCount * 0.05);
-    
+
     if (this.data.notificationPreferences) {
       coherenceScore += 0.1;
       if (this.data.notificationPreferences.enabled) coherenceScore += 0.05;
       if (this.data.notificationPreferences.method) coherenceScore += 0.05;
     }
-    
+
     return {
       type: 'subscription-coherence',
       value: coherenceScore,
-      normalization: 'linear-sum'
+      normalization: 'linear-sum',
     };
   }
 
@@ -243,11 +252,12 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
       data: {
         ...this.data,
         createdAt: this.data.createdAt.toISOString(),
-        updatedAt: this.data.updatedAt.toISOString()
+        updatedAt: this.data.updatedAt.toISOString(),
       },
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
       primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
-      observerFrame: this.observerFrame
+      observerFrame: this.observerFrame,
     };
   }
 
@@ -259,19 +269,19 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
     if (!this.data.id || this.data.id !== this.id) {
       return false;
     }
-    
+
     if (!this.data.channelId || this.data.channelId.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.subscriber || this.data.subscriber.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.notificationPreferences) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -284,8 +294,8 @@ export class ChannelSubscriptionObject extends UORObject implements Subscription
       {
         id: 'subscription:core',
         value: { type: 'channel-subscription' },
-        domain: 'subscription'
-      }
+        domain: 'subscription',
+      },
     ];
   }
 }

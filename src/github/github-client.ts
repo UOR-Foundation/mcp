@@ -9,13 +9,13 @@
 export interface GitHubClientOptions {
   /** OAuth token for GitHub authentication */
   token?: string;
-  
+
   /** Username of the repository owner */
   owner?: string;
-  
+
   /** Repository name (defaults to 'uordb') */
   repo?: string;
-  
+
   /** API URL (defaults to 'https://api.github.com') */
   apiUrl?: string;
 }
@@ -28,7 +28,7 @@ export class GitHubClient {
   private owner: string | null;
   private repo: string;
   private apiUrl: string;
-  
+
   /**
    * Creates a new GitHub client
    * @param options Client options
@@ -39,7 +39,7 @@ export class GitHubClient {
     this.repo = options.repo || 'uordb';
     this.apiUrl = options.apiUrl || 'https://api.github.com';
   }
-  
+
   /**
    * Sets the authentication token
    * @param token The OAuth token
@@ -47,7 +47,7 @@ export class GitHubClient {
   setToken(token: string): void {
     this.token = token;
   }
-  
+
   /**
    * Sets the repository owner
    * @param owner The owner username
@@ -55,7 +55,7 @@ export class GitHubClient {
   setOwner(owner: string): void {
     this.owner = owner;
   }
-  
+
   /**
    * Gets the current user information
    * @returns The user information or null if not authenticated
@@ -64,7 +64,7 @@ export class GitHubClient {
     if (!this.token) {
       return null;
     }
-    
+
     try {
       const response = await this.request('/user');
       return response;
@@ -73,7 +73,7 @@ export class GitHubClient {
       return null;
     }
   }
-  
+
   /**
    * Checks if the UOR repository exists
    * @returns Whether the repository exists
@@ -82,15 +82,15 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return false;
     }
-    
+
     try {
       await this.request(`/repos/${this.owner}/${this.repo}`);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
-  
+
   /**
    * Creates the UOR repository if it doesn't exist
    * @returns Whether the operation was successful
@@ -99,12 +99,12 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return false;
     }
-    
+
     // Check if repository already exists
     if (await this.repositoryExists()) {
       return true;
     }
-    
+
     // Create the repository
     try {
       await this.request('/user/repos', {
@@ -113,20 +113,20 @@ export class GitHubClient {
           name: this.repo,
           description: 'Universal Object Reference Database',
           private: false,
-          auto_init: true
-        })
+          auto_init: true,
+        }),
       });
-      
+
       // Initialize repository structure
       await this.createInitialStructure();
-      
+
       return true;
-    } catch (error) {
-      console.error('Error creating repository:', error);
+    } catch (_error) {
+      console.error('Error creating repository:', _error);
       return false;
     }
   }
-  
+
   /**
    * Creates the initial repository structure
    * @returns Whether the operation was successful
@@ -135,34 +135,30 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return false;
     }
-    
+
     try {
       // Create README.md
       await this.createOrUpdateFile(
         'README.md',
         'Universal Object Reference Database',
         'This repository is used to store Universal Object Reference (UOR) data.\n\n' +
-        'It is automatically managed by the UOR MCP Server.'
+          'It is automatically managed by the UOR MCP Server.'
       );
-      
+
       // Create directories
       const directories = ['concepts', 'resources', 'topics', 'predicates', 'resolvers'];
-      
+
       for (const dir of directories) {
-        await this.createOrUpdateFile(
-          `${dir}/.gitkeep`,
-          `Initialize ${dir} directory`,
-          ''
-        );
+        await this.createOrUpdateFile(`${dir}/.gitkeep`, `Initialize ${dir} directory`, '');
       }
-      
+
       return true;
-    } catch (error) {
-      console.error('Error initializing repository structure:', error);
+    } catch (_error) {
+      console.error('Error initializing repository structure:', _error);
       return false;
     }
   }
-  
+
   /**
    * Gets a file from the repository
    * @param path The file path
@@ -172,21 +168,19 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return null;
     }
-    
+
     try {
-      const response = await this.request(
-        `/repos/${this.owner}/${this.repo}/contents/${path}`
-      );
-      
+      const response = await this.request(`/repos/${this.owner}/${this.repo}/contents/${path}`);
+
       // Decode content
       const content = atob(response.content);
       return { content, sha: response.sha };
-    } catch (error) {
+    } catch (_error) {
       // File not found
       return null;
     }
   }
-  
+
   /**
    * Creates or updates a file in the repository
    * @param path The file path
@@ -204,31 +198,31 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return false;
     }
-    
+
     try {
       const endpoint = `/repos/${this.owner}/${this.repo}/contents/${path}`;
       const body: any = {
         message,
-        content: btoa(content)
+        content: btoa(content),
       };
-      
+
       // If SHA is provided, it's an update
       if (sha) {
         body.sha = sha;
       }
-      
+
       await this.request(endpoint, {
         method: 'PUT',
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
-      
+
       return true;
-    } catch (error) {
-      console.error(`Error ${sha ? 'updating' : 'creating'} file:`, error);
+    } catch (_error) {
+      console.error(`Error ${sha ? 'updating' : 'creating'} file:`, _error);
       return false;
     }
   }
-  
+
   /**
    * Deletes a file from the repository
    * @param path The file path
@@ -240,24 +234,24 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return false;
     }
-    
+
     try {
       const endpoint = `/repos/${this.owner}/${this.repo}/contents/${path}`;
       await this.request(endpoint, {
         method: 'DELETE',
         body: JSON.stringify({
           message,
-          sha
-        })
+          sha,
+        }),
       });
-      
+
       return true;
-    } catch (error) {
-      console.error('Error deleting file:', error);
+    } catch (_error) {
+      console.error('Error deleting file:', _error);
       return false;
     }
   }
-  
+
   /**
    * Lists files in a directory
    * @param path The directory path
@@ -267,20 +261,18 @@ export class GitHubClient {
     if (!this.token || !this.owner) {
       return null;
     }
-    
+
     try {
-      const response = await this.request(
-        `/repos/${this.owner}/${this.repo}/contents/${path}`
-      );
-      
+      const response = await this.request(`/repos/${this.owner}/${this.repo}/contents/${path}`);
+
       // Filter out directories
       return Array.isArray(response) ? response : null;
-    } catch (error) {
-      console.error('Error listing files:', error);
+    } catch (_error) {
+      console.error('Error listing files:', _error);
       return null;
     }
   }
-  
+
   /**
    * Makes a request to the GitHub API
    * @param endpoint The API endpoint
@@ -290,29 +282,29 @@ export class GitHubClient {
   async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     // Set up headers
     const headers = {
-      'Accept': 'application/vnd.github.v3+json',
+      Accept: 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
-      ...options.headers
+      ...options.headers,
     } as Record<string, string>;
-    
+
     // Add authorization if token is available
     if (this.token) {
       headers['Authorization'] = `token ${this.token}`;
     }
-    
+
     // Make the request
     const url = `${this.apiUrl}${endpoint}`;
     const response = await fetch(url, {
       ...options,
-      headers
+      headers,
     });
-    
+
     // Handle errors
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Unknown error' }));
       throw new Error(`GitHub API error: ${error.message}`);
     }
-    
+
     // Return the response data
     return response.json();
   }

@@ -16,21 +16,21 @@ export interface DecompositionAlgorithm {
    * @returns Prime decomposition of the data
    */
   decompose(data: any): PrimeDecomposition;
-  
+
   /**
    * Recompose data from prime factors
    * @param decomposition Prime decomposition to recompose
    * @returns Recomposed data
    */
   recompose(decomposition: PrimeDecomposition): any;
-  
+
   /**
    * Compute canonical representation from prime decomposition
    * @param decomposition Prime decomposition
    * @returns Canonical representation
    */
   computeCanonical(decomposition: PrimeDecomposition): CanonicalRepresentation;
-  
+
   /**
    * Get the domain of this decomposition algorithm
    * @returns Domain identifier
@@ -45,10 +45,10 @@ export interface DecompositionAlgorithm {
 export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorithm {
   /** Algorithm identifier */
   protected id: string;
-  
+
   /** Algorithm domain */
   protected domain: string;
-  
+
   /**
    * Creates a new decomposition algorithm
    * @param id Algorithm identifier
@@ -58,28 +58,28 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
     this.id = id;
     this.domain = domain;
   }
-  
+
   /**
    * Decompose data into prime factors
    * @param data Data to decompose
    * @returns Prime decomposition of the data
    */
   abstract decompose(data: any): PrimeDecomposition;
-  
+
   /**
    * Recompose data from prime factors
    * @param decomposition Prime decomposition to recompose
    * @returns Recomposed data
    */
   abstract recompose(decomposition: PrimeDecomposition): any;
-  
+
   /**
    * Compute canonical representation from prime decomposition
    * @param decomposition Prime decomposition
    * @returns Canonical representation
    */
   abstract computeCanonical(decomposition: PrimeDecomposition): CanonicalRepresentation;
-  
+
   /**
    * Get the domain of this decomposition algorithm
    * @returns Domain identifier
@@ -87,7 +87,7 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
   getDomain(): string {
     return this.domain;
   }
-  
+
   /**
    * Create a prime factor
    * @param id Factor identifier
@@ -100,10 +100,10 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
       id,
       value,
       multiplicity,
-      domain: this.domain
+      domain: this.domain,
     };
   }
-  
+
   /**
    * Create a prime decomposition
    * @param factors Prime factors
@@ -113,10 +113,10 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
   protected createDecomposition(factors: PrimeFactor[], method?: string): PrimeDecomposition {
     return {
       primeFactors: factors,
-      decompositionMethod: method || this.id
+      decompositionMethod: method || this.id,
     };
   }
-  
+
   /**
    * Create a canonical representation
    * @param value Canonical value
@@ -125,14 +125,14 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
    * @returns Canonical representation
    */
   protected createCanonicalRepresentation(
-    value: any, 
-    type: string, 
+    value: any,
+    type: string,
     coherenceNorm?: number
   ): CanonicalRepresentation {
     return {
       representationType: type,
       value,
-      coherenceNorm
+      coherenceNorm,
     };
   }
 }
@@ -144,9 +144,9 @@ export abstract class BaseDecompositionAlgorithm implements DecompositionAlgorit
 export class DecompositionRegistry {
   private static instance: DecompositionRegistry;
   private algorithms: Map<string, DecompositionAlgorithm> = new Map();
-  
+
   private constructor() {}
-  
+
   /**
    * Get the singleton instance
    * @returns DecompositionRegistry instance
@@ -157,7 +157,7 @@ export class DecompositionRegistry {
     }
     return DecompositionRegistry.instance;
   }
-  
+
   /**
    * Register a decomposition algorithm
    * @param domain Algorithm domain
@@ -166,7 +166,7 @@ export class DecompositionRegistry {
   public registerAlgorithm(domain: string, algorithm: DecompositionAlgorithm): void {
     this.algorithms.set(domain, algorithm);
   }
-  
+
   /**
    * Get a decomposition algorithm for a domain
    * @param domain Algorithm domain
@@ -175,7 +175,7 @@ export class DecompositionRegistry {
   public getAlgorithm(domain: string): DecompositionAlgorithm | undefined {
     return this.algorithms.get(domain);
   }
-  
+
   /**
    * Get all registered algorithms
    * @returns Map of all registered algorithms

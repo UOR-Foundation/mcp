@@ -4,17 +4,37 @@ import { UORDBManager } from '../github/uordb-manager';
 import { SchemaIntegration } from '../schema/schema-integration';
 import { UORCoreSchema } from '../schema/schema-types';
 import PubSubManager from '../pubsub/pubsub-manager';
-import { EventBase, EventPriority, Channel, ChannelVisibility, ChannelSubscription } from '../pubsub/event-types';
+import {
+  EventBase,
+  EventPriority,
+  Channel,
+  ChannelVisibility,
+  ChannelSubscription,
+} from '../pubsub/event-types';
 import { EventObject } from '../pubsub/event';
 import { ChannelObject } from '../pubsub/channel';
 import { ChannelSubscriptionObject } from '../pubsub/subscription';
 import MessageManager from '../messaging/message-manager';
-import { MessageBase, MessageThread, MessageSubscription, MessageStatus, MessagePriority } from '../messaging/message-types';
+import {
+  MessageBase,
+  MessageThread,
+  MessageSubscription,
+  MessageStatus,
+  MessagePriority,
+} from '../messaging/message-types';
 import { MessageObject } from '../messaging/message';
 import { ThreadObject } from '../messaging/thread';
 import { SubscriptionObject } from '../messaging/subscription';
 import ContentManager from '../content/content-manager';
-import { ContentType, ContentBase, ConceptContent, ResourceContent, TopicContent, PredicateContent, MediaContent } from '../content/content-types';
+import {
+  ContentType,
+  ContentBase,
+  ConceptContent,
+  ResourceContent,
+  TopicContent,
+  PredicateContent,
+  MediaContent,
+} from '../content/content-types';
 import { ConceptObject } from '../content/concept';
 import { ResourceObject } from '../content/resource';
 import { TopicObject } from '../content/topic';
@@ -33,7 +53,7 @@ interface StoredUORObject {
 export class MCPServer {
   private static instance: MCPServer;
   private uordbManager: UORDBManager | null = null;
-  private currentUser: { username: string, token: string } | null = null;
+  private currentUser: { username: string; token: string } | null = null;
   private schemaIntegration: SchemaIntegration | null = null;
   private pubSubManager: typeof PubSubManager;
   private messageManager: typeof MessageManager;
@@ -44,7 +64,7 @@ export class MCPServer {
   private constructor() {
     // Initialize schema integration
     this.schemaIntegration = SchemaIntegration.getInstance();
-    
+
     // Initialize all managers
     this.pubSubManager = PubSubManager;
     this.messageManager = MessageManager;
@@ -52,7 +72,6 @@ export class MCPServer {
     this.identityManager = IdentityManager.getInstance();
     this.profileManager = ProfileManager.getInstance();
   }
-
 
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -63,7 +82,7 @@ export class MCPServer {
 
   public setAuthentication(username: string, token: string): void {
     this.currentUser = { username, token };
-    
+
     const githubClient = new GitHubClient({ token });
     this.uordbManager = new UORDBManager(githubClient);
   }
@@ -104,7 +123,7 @@ export class MCPServer {
       throw error;
     }
   }
-  
+
   /**
    * Check if the repository exists for the current user
    * @returns Whether repository exists
@@ -113,7 +132,7 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const accessStatus = await (this.uordbManager as any).repositoryService.checkRepositoryAccess(
         this.currentUser.username
@@ -225,20 +244,20 @@ export class MCPServer {
       const parts = reference.split('/');
       const type = parts[2]; // Assuming format uor://type/id
       const id = parts.slice(3).join('/');
-      
+
       const object = await this.uordbManager.getObject(this.currentUser.username, type, id);
-      
+
       if (object) {
         return {
           type: object.type,
           data: object,
-          reference: reference
+          reference: reference,
         };
       }
     }
-    
+
     const storedData = localStorage.getItem(`uor:${reference}`);
-    
+
     if (!storedData) {
       return null;
     }
@@ -253,13 +272,13 @@ export class MCPServer {
 
   private async createUOR(type: string, data: any): Promise<string> {
     const reference = `uor://${type}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     const uorObject = {
       id: reference,
       type: type,
-      ...data
+      ...data,
     };
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(uorObject);
@@ -268,16 +287,19 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     // Store in GitHub if authenticated
     if (this.uordbManager && this.currentUser) {
       await this.uordbManager.storeObject(this.currentUser.username, uorObject);
     } else {
-      localStorage.setItem(`uor:${reference}`, JSON.stringify({
-        type,
-        data: uorObject,
-        reference
-      }));
+      localStorage.setItem(
+        `uor:${reference}`,
+        JSON.stringify({
+          type,
+          data: uorObject,
+          reference,
+        })
+      );
     }
 
     return reference;
@@ -288,33 +310,35 @@ export class MCPServer {
       const parts = reference.split('/');
       const type = parts[2]; // Assuming format uor://type/id
       const id = parts.slice(3).join('/');
-      
+
       const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-      
+
       if (existingObject) {
         const updatedObject = {
           ...existingObject,
           ...data,
           id: reference,
-          type: type
+          type: type,
         };
-        
+
         if (this.schemaIntegration) {
           try {
             this.schemaIntegration.conformUORObject(updatedObject);
           } catch (error: any) {
             console.error('Schema validation failed for updated UOR object:', error);
-            throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+            throw new Error(
+              `Schema validation failed: ${error.message || 'Unknown validation error'}`
+            );
           }
         }
-        
+
         await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
         return true;
       }
     }
-    
+
     const existingData = localStorage.getItem(`uor:${reference}`);
-    
+
     if (!existingData) {
       return false;
     }
@@ -322,7 +346,7 @@ export class MCPServer {
     try {
       const uorObject = JSON.parse(existingData) as StoredUORObject;
       uorObject.data = { ...uorObject.data, ...data };
-      
+
       localStorage.setItem(`uor:${reference}`, JSON.stringify(uorObject));
       return true;
     } catch (error) {
@@ -336,7 +360,7 @@ export class MCPServer {
       const parts = reference.split('/');
       const type = parts[2]; // Assuming format uor://type/id
       const id = parts.slice(3).join('/');
-      
+
       try {
         await this.uordbManager.deleteObject(this.currentUser.username, type, id);
         return true;
@@ -344,9 +368,9 @@ export class MCPServer {
         console.error('Error deleting UOR from GitHub:', error);
       }
     }
-    
+
     const existingData = localStorage.getItem(`uor:${reference}`);
-    
+
     if (!existingData) {
       return false;
     }
@@ -381,23 +405,23 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const eventId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.publisher) {
       data.publisher = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     // Create event object
     const event = this.pubSubManager.createEvent(eventId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, event);
-    
+
     return `uor://event/${eventId}`;
   }
-  
+
   /**
    * Creates a new channel
    * @param id Unique channel ID (optional, generated if not provided)
@@ -408,54 +432,57 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const channelId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     if (!data.namespace) {
       data.namespace = this.currentUser.username;
     }
-    
+
     // Create channel object
     const channel = this.pubSubManager.createChannel(channelId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, channel);
-    
+
     return `uor://channel/${channelId}`;
   }
-  
+
   /**
    * Creates a new subscription
    * @param id Unique subscription ID (optional, generated if not provided)
    * @param data Subscription data
    * @returns The UOR reference to the created subscription
    */
-  private async createChannelSubscription(data: Partial<ChannelSubscription>, id?: string): Promise<string> {
+  private async createChannelSubscription(
+    data: Partial<ChannelSubscription>,
+    id?: string
+  ): Promise<string> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const subscriptionId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.subscriber) {
       data.subscriber = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     // Create subscription object
     const subscription = this.pubSubManager.createSubscription(subscriptionId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, subscription);
-    
+
     return `uor://subscription/${subscriptionId}`;
   }
-  
+
   /**
    * Updates an existing event
    * @param reference UOR reference to the event
@@ -466,32 +493,32 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'event') {
       throw new Error(`Not an event object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Event not found: ${reference}`);
     }
-    
+
     // Update the event
     const updatedObject = this.pubSubManager.updateEvent(existingObject as EventObject, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Updates an existing channel
    * @param reference UOR reference to the channel
@@ -502,68 +529,74 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'channel') {
       throw new Error(`Not a channel object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Channel not found: ${reference}`);
     }
-    
+
     // Update the channel
     const updatedObject = this.pubSubManager.updateChannel(existingObject as ChannelObject, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Updates an existing subscription
    * @param reference UOR reference to the subscription
    * @param data Updated subscription data
    * @returns Whether the update was successful
    */
-  private async updateSubscription(reference: string, data: Partial<ChannelSubscription>): Promise<boolean> {
+  private async updateSubscription(
+    reference: string,
+    data: Partial<ChannelSubscription>
+  ): Promise<boolean> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'subscription') {
       throw new Error(`Not a subscription object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Subscription not found: ${reference}`);
     }
-    
+
     // Update the subscription
-    const updatedObject = this.pubSubManager.updateSubscription(existingObject as ChannelSubscriptionObject, data);
-    
+    const updatedObject = this.pubSubManager.updateSubscription(
+      existingObject as ChannelSubscriptionObject,
+      data
+    );
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Publishes an event to a channel
    * @param eventReference UOR reference to the event
@@ -574,91 +607,109 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract event ID from the reference
     const eventParts = eventReference.split('/');
     const eventType = eventParts[2]; // Assuming format uor://type/id
     const eventId = eventParts.slice(3).join('/');
-    
+
     if (eventType !== 'event') {
       throw new Error(`Not an event object: ${eventReference}`);
     }
-    
+
     // Extract channel ID from the reference
     const channelParts = channelReference.split('/');
     const channelType = channelParts[2]; // Assuming format uor://type/id
     const channelId = channelParts.slice(3).join('/');
-    
+
     if (channelType !== 'channel') {
       throw new Error(`Not a channel object: ${channelReference}`);
     }
-    
+
     // Get existing event
-    const existingEvent = await this.uordbManager.getObject(this.currentUser.username, eventType, eventId);
-    
+    const existingEvent = await this.uordbManager.getObject(
+      this.currentUser.username,
+      eventType,
+      eventId
+    );
+
     if (!existingEvent) {
       throw new Error(`Event not found: ${eventReference}`);
     }
-    
+
     // Get existing channel
-    const existingChannel = await this.uordbManager.getObject(this.currentUser.username, channelType, channelId);
-    
+    const existingChannel = await this.uordbManager.getObject(
+      this.currentUser.username,
+      channelType,
+      channelId
+    );
+
     if (!existingChannel) {
       throw new Error(`Channel not found: ${channelReference}`);
     }
-    
-    const subscriptions = await this.uordbManager.listObjects(this.currentUser.username, 'subscription');
+
+    const subscriptions = await this.uordbManager.listObjects(
+      this.currentUser.username,
+      'subscription'
+    );
     const channelSubscriptions = subscriptions
       .filter(sub => sub.type === 'channel-subscription')
       .map(sub => new ChannelSubscriptionObject(sub.id, sub.data));
-    
+
     const matchingSubscribers = this.pubSubManager.getMatchingSubscribers(
       existingChannel as ChannelObject,
       channelSubscriptions
     );
-    
+
     await this.pubSubManager.publishEvent(
       existingEvent as EventObject,
       existingChannel as ChannelObject,
       matchingSubscribers
     );
-    
+
     return true;
   }
-  
+
   /**
    * Propagates an event across namespaces
    * @param eventReference UOR reference to the event
    * @param targetNamespaces Target namespaces to propagate to
    * @returns Whether the propagation was successful
    */
-  private async propagateEvent(eventReference: string, targetNamespaces: string[]): Promise<boolean> {
+  private async propagateEvent(
+    eventReference: string,
+    targetNamespaces: string[]
+  ): Promise<boolean> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract event ID from the reference
     const eventParts = eventReference.split('/');
     const eventType = eventParts[2]; // Assuming format uor://type/id
     const eventId = eventParts.slice(3).join('/');
-    
+
     if (eventType !== 'event') {
       throw new Error(`Not an event object: ${eventReference}`);
     }
-    
+
     // Get existing event
-    const existingEvent = await this.uordbManager.getObject(this.currentUser.username, eventType, eventId);
-    
+    const existingEvent = await this.uordbManager.getObject(
+      this.currentUser.username,
+      eventType,
+      eventId
+    );
+
     if (!existingEvent) {
       throw new Error(`Event not found: ${eventReference}`);
     }
-    
+
     await this.pubSubManager.propagateEventAcrossNamespaces(
       existingEvent as EventObject,
       this.currentUser.username,
       targetNamespaces
     );
-    
+
     return true;
   }
 
@@ -672,23 +723,23 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const messageId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.sender) {
       data.sender = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     // Create message object
     const message = this.messageManager.createMessage(messageId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, message);
-    
+
     return `uor://message/${messageId}`;
   }
-  
+
   /**
    * Creates a new thread
    * @param id Unique thread ID (optional, generated if not provided)
@@ -699,50 +750,53 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const threadId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     // Create thread object
     const thread = this.messageManager.createThread(threadId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, thread);
-    
+
     return `uor://thread/${threadId}`;
   }
-  
+
   /**
    * Creates a new subscription
    * @param id Unique subscription ID (optional, generated if not provided)
    * @param data Subscription data
    * @returns The UOR reference to the created subscription
    */
-  private async createSubscription(data: Partial<MessageSubscription>, id?: string): Promise<string> {
+  private async createSubscription(
+    data: Partial<MessageSubscription>,
+    id?: string
+  ): Promise<string> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Generate ID if not provided
     const subscriptionId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.subscriber) {
       data.subscriber = `uor://identity/${this.currentUser.username}`;
     }
-    
+
     // Create subscription object
     const subscription = this.messageManager.createSubscription(subscriptionId, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, subscription);
-    
+
     return `uor://subscription/${subscriptionId}`;
   }
-  
+
   /**
    * Updates a message
    * @param reference UOR reference to the message
@@ -753,32 +807,32 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'message') {
       throw new Error(`Not a message object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Message not found: ${reference}`);
     }
-    
+
     // Update the message
     const updatedObject = this.messageManager.updateMessage(existingObject as MessageObject, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Updates a thread
    * @param reference UOR reference to the thread
@@ -789,68 +843,74 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'thread') {
       throw new Error(`Not a thread object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Thread not found: ${reference}`);
     }
-    
+
     // Update the thread
     const updatedObject = this.messageManager.updateThread(existingObject as ThreadObject, data);
-    
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Updates a subscription
    * @param reference UOR reference to the subscription
    * @param data Updated subscription data
    * @returns Whether the update was successful
    */
-  private async updateMessageSubscription(reference: string, data: Partial<MessageSubscription>): Promise<boolean> {
+  private async updateMessageSubscription(
+    reference: string,
+    data: Partial<MessageSubscription>
+  ): Promise<boolean> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'subscription') {
       throw new Error(`Not a subscription object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Subscription not found: ${reference}`);
     }
-    
+
     // Update the subscription
-    const updatedObject = this.messageManager.updateSubscription(existingObject as SubscriptionObject, data);
-    
+    const updatedObject = this.messageManager.updateSubscription(
+      existingObject as SubscriptionObject,
+      data
+    );
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Sets the status of a message
    * @param reference UOR reference to the message
@@ -861,32 +921,35 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'message') {
       throw new Error(`Not a message object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Message not found: ${reference}`);
     }
-    
+
     // Update the message status
-    const updatedObject = this.messageManager.setMessageStatus(existingObject as MessageObject, status);
-    
+    const updatedObject = this.messageManager.setMessageStatus(
+      existingObject as MessageObject,
+      status
+    );
+
     // Store in repository
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Publishes a message to recipients
    * @param reference UOR reference to the message
@@ -896,87 +959,100 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract ID from the reference
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'message') {
       throw new Error(`Not a message object: ${reference}`);
     }
-    
+
     // Get existing object
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Message not found: ${reference}`);
     }
-    
+
     await this.messageManager.publishMessage(existingObject as MessageObject);
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, existingObject);
-    
+
     return true;
   }
-  
+
   /**
    * Adds a message to a thread
    * @param threadReference UOR reference to the thread
    * @param messageReference UOR reference to the message
    * @returns Whether the operation was successful
    */
-  private async addMessageToThread(threadReference: string, messageReference: string): Promise<boolean> {
+  private async addMessageToThread(
+    threadReference: string,
+    messageReference: string
+  ): Promise<boolean> {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     // Extract thread ID from the reference
     const threadParts = threadReference.split('/');
     const threadType = threadParts[2]; // Assuming format uor://type/id
     const threadId = threadParts.slice(3).join('/');
-    
+
     if (threadType !== 'thread') {
       throw new Error(`Not a thread object: ${threadReference}`);
     }
-    
+
     // Extract message ID from the reference
     const messageParts = messageReference.split('/');
     const messageType = messageParts[2]; // Assuming format uor://type/id
     const messageId = messageParts.slice(3).join('/');
-    
+
     if (messageType !== 'message') {
       throw new Error(`Not a message object: ${messageReference}`);
     }
-    
+
     // Get existing thread
-    const existingThread = await this.uordbManager.getObject(this.currentUser.username, threadType, threadId);
-    
+    const existingThread = await this.uordbManager.getObject(
+      this.currentUser.username,
+      threadType,
+      threadId
+    );
+
     if (!existingThread) {
       throw new Error(`Thread not found: ${threadReference}`);
     }
-    
+
     // Get existing message
-    const existingMessage = await this.uordbManager.getObject(this.currentUser.username, messageType, messageId);
-    
+    const existingMessage = await this.uordbManager.getObject(
+      this.currentUser.username,
+      messageType,
+      messageId
+    );
+
     if (!existingMessage) {
       throw new Error(`Message not found: ${messageReference}`);
     }
-    
-    const updatedThread = this.messageManager.addMessageToThread(existingThread as ThreadObject, messageReference);
-    
+
+    const updatedThread = this.messageManager.addMessageToThread(
+      existingThread as ThreadObject,
+      messageReference
+    );
+
     // Update message with thread reference if not already set
     const messageData = (existingMessage as MessageObject).getMessageData();
     if (!messageData.threadId) {
       (existingMessage as MessageObject).updateMessage({ threadId: threadReference });
       await this.uordbManager.storeObject(this.currentUser.username, existingMessage);
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, updatedThread);
-    
+
     return true;
   }
-
 
   /**
    * Creates a new concept
@@ -988,18 +1064,18 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const conceptId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = this.currentUser.username;
     }
-    
+
     const fullData = data as ConceptContent;
-    
+
     // Create the concept object
     const concept = this.contentManager.createConcept(conceptId, fullData);
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(concept);
@@ -1008,12 +1084,12 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, concept);
-    
+
     return `uor://concept/${conceptId}`;
   }
-  
+
   /**
    * Creates a new resource
    * @param id Unique resource ID (optional, generated if not provided)
@@ -1024,18 +1100,18 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const resourceId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = this.currentUser.username;
     }
-    
+
     const fullData = data as ResourceContent;
-    
+
     // Create the resource object
     const resource = this.contentManager.createResource(resourceId, fullData);
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(resource);
@@ -1044,12 +1120,12 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, resource);
-    
+
     return `uor://resource/${resourceId}`;
   }
-  
+
   /**
    * Creates a new topic
    * @param id Unique topic ID (optional, generated if not provided)
@@ -1060,18 +1136,18 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const topicId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = this.currentUser.username;
     }
-    
+
     const fullData = data as TopicContent;
-    
+
     // Create the topic object
     const topic = this.contentManager.createTopic(topicId, fullData);
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(topic);
@@ -1080,12 +1156,12 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, topic);
-    
+
     return `uor://topic/${topicId}`;
   }
-  
+
   /**
    * Creates a new predicate
    * @param id Unique predicate ID (optional, generated if not provided)
@@ -1096,18 +1172,18 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const predicateId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = this.currentUser.username;
     }
-    
+
     const fullData = data as PredicateContent;
-    
+
     // Create the predicate object
     const predicate = this.contentManager.createPredicate(predicateId, fullData);
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(predicate);
@@ -1116,12 +1192,12 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, predicate);
-    
+
     return `uor://predicate/${predicateId}`;
   }
-  
+
   /**
    * Creates a new media object
    * @param id Unique media ID (optional, generated if not provided)
@@ -1132,18 +1208,18 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const mediaId = id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
+
     if (!data.createdBy) {
       data.createdBy = this.currentUser.username;
     }
-    
+
     const fullData = data as MediaContent;
-    
+
     // Create the media object
     const media = this.contentManager.createMedia(mediaId, fullData);
-    
+
     if (this.schemaIntegration) {
       try {
         this.schemaIntegration.conformUORObject(media);
@@ -1152,12 +1228,12 @@ export class MCPServer {
         throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
       }
     }
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, media);
-    
+
     return `uor://media/${mediaId}`;
   }
-  
+
   /**
    * Updates content
    * @param reference UOR reference to the content
@@ -1168,24 +1244,27 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Content not found: ${reference}`);
     }
-    
-    const updatedObject = this.contentManager.updateContent(existingObject as unknown as UORObject, data);
-    
+
+    const updatedObject = this.contentManager.updateContent(
+      existingObject as unknown as UORObject,
+      data
+    );
+
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Adds a tag to content
    * @param reference UOR reference to the content
@@ -1196,24 +1275,24 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Content not found: ${reference}`);
     }
-    
+
     const updatedObject = this.contentManager.addTag(existingObject as unknown as UORObject, tag);
-    
+
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Removes a tag from content
    * @param reference UOR reference to the content
@@ -1224,24 +1303,27 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Content not found: ${reference}`);
     }
-    
-    const updatedObject = this.contentManager.removeTag(existingObject as unknown as UORObject, tag);
-    
+
+    const updatedObject = this.contentManager.removeTag(
+      existingObject as unknown as UORObject,
+      tag
+    );
+
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
-  
+
   /**
    * Adds content to a media object
    * @param reference UOR reference to the media
@@ -1252,29 +1334,31 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     const parts = reference.split('/');
     const type = parts[2]; // Assuming format uor://type/id
     const id = parts.slice(3).join('/');
-    
+
     if (type !== 'media') {
       throw new Error(`Not a media object: ${reference}`);
     }
-    
+
     const existingObject = await this.uordbManager.getObject(this.currentUser.username, type, id);
-    
+
     if (!existingObject) {
       throw new Error(`Media not found: ${reference}`);
     }
-    
-    const updatedObject = this.contentManager.addMediaContent(existingObject as MediaObject, content);
-    
+
+    const updatedObject = this.contentManager.addMediaContent(
+      existingObject as MediaObject,
+      content
+    );
+
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
-    
+
     return true;
   }
 
-  
   /**
    * Creates a new identity for the current user
    * @returns The identity reference
@@ -1283,27 +1367,27 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const githubClient = new GitHubClient({ token: this.currentUser.token });
       const githubUser = await githubClient.getCurrentUser();
-      
+
       const identity = await this.identityManager.createIdentity({
         id: githubUser.id.toString(),
         login: githubUser.login,
         name: githubUser.name,
-        email: githubUser.email
+        email: githubUser.email,
       });
-      
+
       await this.uordbManager.storeObject(this.currentUser.username, identity);
-      
+
       return `uor://identity/${identity.id}`;
     } catch (error) {
       console.error('Error creating identity:', error);
       throw new Error('Failed to create identity');
     }
   }
-  
+
   /**
    * Gets the current user's identity
    * @returns The identity object
@@ -1312,25 +1396,25 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         return null;
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       return identity.getPublicView();
     } catch (error) {
       console.error('Error getting identity:', error);
       return null;
     }
   }
-  
+
   /**
    * Updates the current user's identity profile
    * @param profile Updated profile information
@@ -1340,29 +1424,29 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         throw new Error('Identity not found');
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       this.profileManager.updateProfile(identity, profile);
-      
+
       await this.uordbManager.storeObject(this.currentUser.username, identity);
-      
+
       return true;
     } catch (error) {
       console.error('Error updating identity:', error);
       return false;
     }
   }
-  
+
   /**
    * Adds a custom field to the current user's identity
    * @param field Custom field to add
@@ -1372,29 +1456,29 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         throw new Error('Identity not found');
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       this.profileManager.addCustomField(identity, field);
-      
+
       await this.uordbManager.storeObject(this.currentUser.username, identity);
-      
+
       return true;
     } catch (error) {
       console.error('Error adding custom field:', error);
       return false;
     }
   }
-  
+
   /**
    * Removes a custom field from the current user's identity
    * @param key Key of the field to remove
@@ -1404,29 +1488,29 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         throw new Error('Identity not found');
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       this.profileManager.removeCustomField(identity, key);
-      
+
       await this.uordbManager.storeObject(this.currentUser.username, identity);
-      
+
       return true;
     } catch (error) {
       console.error('Error removing custom field:', error);
       return false;
     }
   }
-  
+
   /**
    * Verifies the current user's identity with GitHub
    * @returns Whether verification was successful
@@ -1435,34 +1519,34 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         throw new Error('Identity not found');
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       const verified = await this.identityManager.verifyIdentityWithGitHub(
         identity,
         this.currentUser.token
       );
-      
+
       if (verified) {
         await this.uordbManager.storeObject(this.currentUser.username, identity);
       }
-      
+
       return verified;
     } catch (error) {
       console.error('Error verifying identity:', error);
       return false;
     }
   }
-  
+
   /**
    * Sets the profile image for the current user's identity
    * @param imageData Base64-encoded image data
@@ -1473,29 +1557,26 @@ export class MCPServer {
     if (!this.uordbManager || !this.currentUser) {
       throw new Error('Not authenticated');
     }
-    
+
     try {
       const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
-      
+
       if (identities.length === 0) {
         throw new Error('Identity not found');
       }
-      
+
       const identityData = identities[0];
-      
+
       const identity = new IdentityObject(identityData.id, identityData.data);
-      
+
       const imageArtifact = this.profileManager.createProfileImage(imageData, mimeType);
-      
-      await this.uordbManager.storeObject(
-        this.currentUser.username,
-        imageArtifact
-      );
-      
+
+      await this.uordbManager.storeObject(this.currentUser.username, imageArtifact);
+
       this.profileManager.setProfileImage(identity, imageArtifact);
-      
+
       await this.uordbManager.storeObject(this.currentUser.username, identity);
-      
+
       return true;
     } catch (error) {
       console.error('Error setting profile image:', error);

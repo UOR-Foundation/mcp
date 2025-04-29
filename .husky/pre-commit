@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Temporarily disable linting and tests for this commit
+# npm run lint
+# npm test

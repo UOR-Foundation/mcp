@@ -1,6 +1,6 @@
 /**
  * UOR MCP Server with MCP Protocol Implementation
- * 
+ *
  * This file serves as the main server entry point for the UOR Framework
  * and implements the MCP Protocol for standardized tool interactions.
  */

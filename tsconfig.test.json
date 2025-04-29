@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true,
     "outDir": "dist-test",
@@ -14,14 +15,20 @@
     "forceConsistentCasingInFileNames": true,
     "rootDir": "src",
     "baseUrl": ".",
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "types": ["jest", "node"]
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.test.ts",
+    "src/**/*.test.js",
+    "src/tests/**/*",
+    "src/tests/client-auth.test.js",
+    "src/tests/end-to-end/github-pages-integration.test.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "public"
+    "dist"
   ]
 }

@@ -44,24 +44,28 @@ describe('SchemaValidator', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     
-    const mockSchemaLoader = {
-      initialize: jest.fn().mockResolvedValue(undefined),
-      validate: jest.fn().mockImplementation((schemaId, data) => {
-        if (schemaId === 'https://uor-foundation.org/schemas/uor-core.schema.json') {
-          if (data.id && data.type && data.canonicalRepresentation && data.observerFrame) {
-            return validResult;
-          }
-        } else if (schemaId === 'https://uor-foundation.org/schemas/observer-frame.schema.json') {
-          if (data.id && data.perspective) {
-            return validResult;
-          }
-        } else if (schemaId === 'https://uor-foundation.org/schemas/uor-axioms.schema.json') {
-          if (data.axioms) {
-            return validResult;
-          }
+    const mockInitialize = jest.fn().mockResolvedValue(undefined);
+    const mockValidate = jest.fn().mockImplementation((schemaId, data) => {
+      if (schemaId === 'https://uor-foundation.org/schemas/uor-core.schema.json') {
+        if (data && data.id && data.type && data.canonicalRepresentation && data.observerFrame) {
+          return validResult;
         }
-        return invalidResult;
-      })
+      } else if (schemaId === 'https://uor-foundation.org/schemas/observer-frame.schema.json') {
+        if (data && data.id && data.perspective) {
+          return validResult;
+        }
+      } else if (schemaId === 'https://uor-foundation.org/schemas/uor-axioms.schema.json') {
+        if (data && data.axioms) {
+          return validResult;
+        }
+      }
+      return invalidResult;
+    });
+    
+    const mockSchemaLoader = {
+      initialize: mockInitialize,
+      validate: mockValidate,
+      isInitialized: jest.fn().mockReturnValue(true)
     };
     
     (SchemaLoader.getInstance as jest.Mock).mockReturnValue(mockSchemaLoader);

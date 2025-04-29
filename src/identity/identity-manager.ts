@@ -3,15 +3,22 @@
  * Manages user identities in the UOR system
  */
 
-import { UORObject, CanonicalRepresentation, PrimeDecomposition, ObserverFrame, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
-import { 
-  IdentityData, 
-  IdentityUORObject, 
-  ProfileInfo, 
-  CustomProfileField, 
-  PublicIdentityView, 
+import {
+  UORObject,
+  CanonicalRepresentation,
+  PrimeDecomposition,
+  ObserverFrame,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
+import {
+  IdentityData,
+  IdentityUORObject,
+  ProfileInfo,
+  CustomProfileField,
+  PublicIdentityView,
   IdentityProviderType,
-  IdentityVerificationStatus
+  IdentityVerificationStatus,
 } from './identity-types';
 import { IdentitySchema } from './profile-schema';
 
@@ -28,7 +35,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    */
   constructor(id: string, data: Partial<IdentityData>) {
     super(id, 'identity');
-    
+
     this.data = {
       id: id,
       providers: [],
@@ -37,7 +44,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
       verificationStatus: IdentityVerificationStatus.UNVERIFIED,
       createdAt: new Date(),
       updatedAt: new Date(),
-      ...data
+      ...data,
     };
   }
 
@@ -55,20 +62,20 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    */
   getPublicView(): PublicIdentityView {
     const { id, verificationStatus } = this.data;
-    
+
     const providers = this.data.providers.map(provider => ({
       type: provider.type,
       username: provider.username,
-      verified: provider.verified
+      verified: provider.verified,
     }));
-    
+
     const { email, ...publicProfile } = this.data.profile;
-    
+
     return {
       id,
       providers,
       profile: publicProfile,
-      verificationStatus
+      verificationStatus,
     };
   }
 
@@ -79,7 +86,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
   updateProfile(profile: Partial<ProfileInfo>): void {
     this.data.profile = {
       ...this.data.profile,
-      ...profile
+      ...profile,
     };
     this.data.updatedAt = new Date();
   }
@@ -90,7 +97,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    */
   addCustomField(field: CustomProfileField): void {
     this.removeCustomField(field.key);
-    
+
     this.data.customFields.push(field);
     this.data.updatedAt = new Date();
   }
@@ -120,17 +127,17 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    */
   verifyProvider(provider: IdentityProviderType, verified: boolean): void {
     const providerIndex = this.data.providers.findIndex(p => p.type === provider);
-    
+
     if (providerIndex >= 0) {
       this.data.providers[providerIndex].verified = verified;
-      
+
       if (verified) {
         this.data.providers[providerIndex].verifiedAt = new Date();
       }
-      
+
       this.updateVerificationStatus();
     }
-    
+
     this.data.updatedAt = new Date();
   }
 
@@ -139,7 +146,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    */
   private updateVerificationStatus(): void {
     const hasVerifiedProviders = this.data.providers.some(p => p.verified);
-    
+
     if (hasVerifiedProviders) {
       this.data.verificationStatus = IdentityVerificationStatus.VERIFIED;
     } else if (this.data.providers.length > 0) {
@@ -169,31 +176,31 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
       {
         id: `identity:${this.id}`,
         value: { id: this.id, type: 'identity' },
-        domain: 'identity'
+        domain: 'identity',
       },
-      
+
       ...this.data.providers.map(provider => ({
         id: `provider:${provider.type}:${provider.username}`,
         value: {
           type: provider.type,
           username: provider.username,
-          verified: provider.verified
+          verified: provider.verified,
         },
-        domain: 'identity.provider'
+        domain: 'identity.provider',
       })),
-      
+
       ...Object.entries(this.data.profile)
         .filter(([_, value]) => value !== undefined && value !== null && value !== '')
         .map(([key, value]) => ({
           id: `profile:${key}`,
           value: { [key]: value },
-          domain: 'identity.profile'
-        }))
+          domain: 'identity.profile',
+        })),
     ];
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'identity-decomposition'
+      decompositionMethod: 'identity-decomposition',
     };
   }
 
@@ -204,22 +211,20 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
   computeCanonicalRepresentation(): CanonicalRepresentation {
     const canonicalData = {
       id: this.data.id,
-      providers: [...this.data.providers].sort((a, b) => 
+      providers: [...this.data.providers].sort((a, b) =>
         `${a.type}:${a.username}`.localeCompare(`${b.type}:${b.username}`)
       ),
       profile: { ...this.data.profile },
-      customFields: [...this.data.customFields].sort((a, b) => 
-        a.key.localeCompare(b.key)
-      ),
+      customFields: [...this.data.customFields].sort((a, b) => a.key.localeCompare(b.key)),
       verificationStatus: this.data.verificationStatus,
       createdAt: this.data.createdAt.toISOString(),
-      updatedAt: this.data.updatedAt.toISOString()
+      updatedAt: this.data.updatedAt.toISOString(),
     };
-    
+
     return {
       representationType: 'identity-canonical',
       value: canonicalData,
-      coherenceNorm: 1.0 // Perfect coherence for canonical form
+      coherenceNorm: 1.0, // Perfect coherence for canonical form
     };
   }
 
@@ -228,7 +233,6 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
    * @returns The coherence measure
    */
   measureCoherence(): CoherenceMeasure {
-    
     let verificationScore = 0;
     switch (this.data.verificationStatus) {
       case IdentityVerificationStatus.VERIFIED:
@@ -240,22 +244,23 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
       default:
         verificationScore = 0;
     }
-    
+
     const profileFields = ['displayName', 'bio', 'location', 'website', 'email', 'profileImageRef'];
-    const filledFields = profileFields.filter(field => 
-      this.data.profile[field as keyof ProfileInfo] !== undefined && 
-      this.data.profile[field as keyof ProfileInfo] !== null &&
-      this.data.profile[field as keyof ProfileInfo] !== ''
+    const filledFields = profileFields.filter(
+      field =>
+        this.data.profile[field as keyof ProfileInfo] !== undefined &&
+        this.data.profile[field as keyof ProfileInfo] !== null &&
+        this.data.profile[field as keyof ProfileInfo] !== ''
     );
-    
+
     const profileScore = (filledFields.length / profileFields.length) * 0.5;
-    
+
     const coherenceValue = verificationScore + profileScore;
-    
+
     return {
       type: 'identity-coherence',
       value: coherenceValue,
-      normalization: 'linear-sum'
+      normalization: 'linear-sum',
     };
   }
 
@@ -268,9 +273,10 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
       id: this.id,
       type: this.type,
       data: this.data,
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
       primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
-      observerFrame: this.observerFrame
+      observerFrame: this.observerFrame,
     };
   }
 
@@ -282,20 +288,19 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
     if (!this.data.id || this.data.id !== this.id) {
       return false;
     }
-    
+
     for (const provider of this.data.providers) {
       if (!provider.type || !provider.username || provider.verified === undefined) {
         return false;
       }
     }
-    
+
     for (const field of this.data.customFields) {
       if (!field.key || field.value === undefined || field.isPublic === undefined) {
         return false;
       }
     }
-    
-    
+
     return true;
   }
 
@@ -308,8 +313,8 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
       {
         id: 'identity:core',
         value: { type: 'identity' },
-        domain: 'identity'
-      }
+        domain: 'identity',
+      },
     ];
   }
 }
@@ -320,7 +325,7 @@ export class IdentityObject extends UORObject implements IdentityUORObject {
  */
 export class IdentityManager {
   private static instance: IdentityManager;
-  
+
   /**
    * Gets the singleton instance
    * @returns The identity manager instance
@@ -331,44 +336,49 @@ export class IdentityManager {
     }
     return IdentityManager.instance;
   }
-  
+
   /**
    * Private constructor for singleton pattern
    */
   private constructor() {}
-  
+
   /**
    * Creates a new identity linked to a GitHub account
    * @param githubUser GitHub user information
    * @returns The created identity object
    */
-  async createIdentity(githubUser: { id: string, login: string, name?: string, email?: string }): Promise<IdentityObject> {
+  async createIdentity(githubUser: {
+    id: string;
+    login: string;
+    name?: string;
+    email?: string;
+  }): Promise<IdentityObject> {
     const identityId = `identity-${githubUser.login}-${Date.now()}`;
-    
+
     const identityData: Partial<IdentityData> = {
       providers: [
         {
           type: IdentityProviderType.GITHUB,
           id: githubUser.id,
           username: githubUser.login,
-          verified: false
-        }
+          verified: false,
+        },
       ],
       profile: {
         displayName: githubUser.name,
-        email: githubUser.email
+        email: githubUser.email,
       },
-      verificationStatus: IdentityVerificationStatus.PENDING
+      verificationStatus: IdentityVerificationStatus.PENDING,
     };
-    
+
     const identity = new IdentityObject(identityId, identityData);
-    
+
     identity.setCanonicalRepresentation(identity.computeCanonicalRepresentation());
     identity.setPrimeDecomposition(identity.computePrimeDecomposition());
-    
+
     return identity;
   }
-  
+
   /**
    * Verifies an identity with GitHub
    * @param identity The identity to verify
@@ -377,24 +387,23 @@ export class IdentityManager {
    */
   async verifyIdentityWithGitHub(identity: IdentityObject, githubToken: string): Promise<boolean> {
     try {
-      const githubProvider = identity.getIdentityData().providers.find(
-        p => p.type === IdentityProviderType.GITHUB
-      );
-      
+      const githubProvider = identity
+        .getIdentityData()
+        .providers.find(p => p.type === IdentityProviderType.GITHUB);
+
       if (!githubProvider) {
         return false;
       }
-      
-      
+
       identity.verifyProvider(IdentityProviderType.GITHUB, true);
-      
+
       return true;
     } catch (error) {
       console.error('Error verifying identity with GitHub:', error);
       return false;
     }
   }
-  
+
   /**
    * Updates an identity with the latest GitHub information
    * @param identity The identity to update
@@ -402,20 +411,20 @@ export class IdentityManager {
    * @returns The updated identity
    */
   updateIdentityFromGitHub(
-    identity: IdentityObject, 
-    githubUser: { name?: string, email?: string, location?: string, bio?: string, blog?: string }
+    identity: IdentityObject,
+    githubUser: { name?: string; email?: string; location?: string; bio?: string; blog?: string }
   ): IdentityObject {
     identity.updateProfile({
       displayName: githubUser.name,
       email: githubUser.email,
       location: githubUser.location,
       bio: githubUser.bio,
-      website: githubUser.blog
+      website: githubUser.blog,
     });
-    
+
     identity.setCanonicalRepresentation(identity.computeCanonicalRepresentation());
     identity.setPrimeDecomposition(identity.computePrimeDecomposition());
-    
+
     return identity;
   }
 }

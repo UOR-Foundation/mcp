@@ -17,10 +17,10 @@ export class MockUORDBManager {
         resources: 0,
         topics: 0,
         predicates: 0,
-        resolvers: 0
-      }
+        resolvers: 0,
+      },
     });
-    
+
     // Initialize object collections
     if (!this.objects.has(username)) {
       this.objects.set(username, new Map());
@@ -41,10 +41,10 @@ export class MockUORDBManager {
     if (!this.objects.has(username)) {
       this.objects.set(username, new Map());
     }
-    
+
     const userObjects = this.objects.get(username)!;
     userObjects.set(object.id, { ...object });
-    
+
     // Update object counts
     const repo = this.repositories.get(username);
     if (repo) {
@@ -61,10 +61,10 @@ export class MockUORDBManager {
     if (!this.objects.has(username)) {
       return null;
     }
-    
+
     const userObjects = this.objects.get(username)!;
     const objectId = `uor://${type}/${id}`;
-    
+
     return userObjects.get(objectId) || null;
   }
 
@@ -73,13 +73,13 @@ export class MockUORDBManager {
     if (!this.objects.has(username)) {
       return;
     }
-    
+
     const userObjects = this.objects.get(username)!;
     const objectId = `uor://${type}/${id}`;
-    
+
     if (userObjects.has(objectId)) {
       userObjects.delete(objectId);
-      
+
       // Update object counts
       const repo = this.repositories.get(username);
       if (repo) {
@@ -97,16 +97,16 @@ export class MockUORDBManager {
     if (!this.objects.has(username)) {
       return [];
     }
-    
+
     const userObjects = this.objects.get(username)!;
     const typedObjects: any[] = [];
-    
+
     for (const [_, object] of userObjects.entries()) {
       if (object.type === type) {
         typedObjects.push({ ...object });
       }
     }
-    
+
     return typedObjects;
   }
 
@@ -115,11 +115,11 @@ export class MockUORDBManager {
     if (!this.objects.has(username)) {
       return [];
     }
-    
+
     const userObjects = this.objects.get(username)!;
     const results: any[] = [];
     const lowerQuery = query.toLowerCase();
-    
+
     for (const [_, object] of userObjects.entries()) {
       // Simple search implementation - checks if any string property contains the query
       let matches = false;
@@ -129,12 +129,12 @@ export class MockUORDBManager {
           break;
         }
       }
-      
+
       if (matches) {
         results.push({ ...object });
       }
     }
-    
+
     return results;
   }
 }

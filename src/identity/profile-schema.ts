@@ -12,37 +12,37 @@ export const ProfileSchema = {
     displayName: {
       type: 'string',
       maxLength: 100,
-      description: 'Display name for the user'
+      description: 'Display name for the user',
     },
     bio: {
       type: 'string',
       maxLength: 500,
-      description: 'Short biography or description'
+      description: 'Short biography or description',
     },
     location: {
       type: 'string',
       maxLength: 100,
-      description: 'Geographic location'
+      description: 'Geographic location',
     },
     website: {
       type: 'string',
       format: 'uri',
       maxLength: 200,
-      description: 'Personal website URL'
+      description: 'Personal website URL',
     },
     email: {
       type: 'string',
       format: 'email',
       maxLength: 100,
-      description: 'Contact email address'
+      description: 'Contact email address',
     },
     profileImageRef: {
       type: 'string',
       pattern: '^uor://.+$',
-      description: 'UOR reference to profile image'
-    }
+      description: 'UOR reference to profile image',
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 };
 
 /**
@@ -55,19 +55,19 @@ export const CustomFieldSchema = {
       type: 'string',
       pattern: '^[a-zA-Z0-9_-]+$',
       maxLength: 50,
-      description: 'Custom field key (alphanumeric, underscore, hyphen)'
+      description: 'Custom field key (alphanumeric, underscore, hyphen)',
     },
     value: {
       type: ['string', 'number', 'boolean', 'object', 'array'],
-      description: 'Custom field value'
+      description: 'Custom field value',
     },
     isPublic: {
       type: 'boolean',
-      description: 'Whether the field is publicly visible'
-    }
+      description: 'Whether the field is publicly visible',
+    },
   },
   required: ['key', 'value', 'isPublic'],
-  additionalProperties: false
+  additionalProperties: false,
 };
 
 /**
@@ -79,7 +79,7 @@ export const IdentitySchema = {
     id: {
       type: 'string',
       pattern: '^[a-zA-Z0-9_-]+$',
-      description: 'Unique identity ID'
+      description: 'Unique identity ID',
     },
     providers: {
       type: 'array',
@@ -89,51 +89,59 @@ export const IdentitySchema = {
           type: {
             type: 'string',
             enum: ['github'],
-            description: 'Identity provider type'
+            description: 'Identity provider type',
           },
           id: {
             type: 'string',
-            description: 'Provider-specific ID'
+            description: 'Provider-specific ID',
           },
           username: {
             type: 'string',
-            description: 'Provider-specific username'
+            description: 'Provider-specific username',
           },
           verified: {
             type: 'boolean',
-            description: 'Whether the identity is verified with this provider'
+            description: 'Whether the identity is verified with this provider',
           },
           verifiedAt: {
             type: 'string',
             format: 'date-time',
-            description: 'When the identity was verified'
-          }
+            description: 'When the identity was verified',
+          },
         },
         required: ['type', 'id', 'username', 'verified'],
-        additionalProperties: false
-      }
+        additionalProperties: false,
+      },
     },
     profile: ProfileSchema,
     customFields: {
       type: 'array',
-      items: CustomFieldSchema
+      items: CustomFieldSchema,
     },
     verificationStatus: {
       type: 'string',
       enum: ['unverified', 'pending', 'verified'],
-      description: 'Overall verification status'
+      description: 'Overall verification status',
     },
     createdAt: {
       type: 'string',
       format: 'date-time',
-      description: 'When the identity was created'
+      description: 'When the identity was created',
     },
     updatedAt: {
       type: 'string',
       format: 'date-time',
-      description: 'When the identity was last updated'
-    }
+      description: 'When the identity was last updated',
+    },
   },
-  required: ['id', 'providers', 'profile', 'customFields', 'verificationStatus', 'createdAt', 'updatedAt'],
-  additionalProperties: false
+  required: [
+    'id',
+    'providers',
+    'profile',
+    'customFields',
+    'verificationStatus',
+    'createdAt',
+    'updatedAt',
+  ],
+  additionalProperties: false,
 };

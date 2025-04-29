@@ -37,21 +37,23 @@ export class UORDBManager {
   async initialize(username: string): Promise<void> {
     // Check if repository exists and user has access
     const accessStatus = await this.repositoryService.checkRepositoryAccess(username);
-    
+
     if (!accessStatus.exists) {
       // Create repository if it doesn't exist
       const created = await this.repositoryService.createRepository(username);
       if (!created) {
-        throw new Error('Failed to create UOR repository. Please check your GitHub account settings.');
+        throw new Error(
+          'Failed to create UOR repository. Please check your GitHub account settings.'
+        );
       }
     } else if (!accessStatus.hasWriteAccess) {
       // Repository exists but user doesn't have write access
       throw new Error(
         'No write access to the repository. Please check your GitHub permissions. ' +
-        'You need push access to the repository to use UOR features.'
+          'You need push access to the repository to use UOR features.'
       );
     }
-    
+
     // Verify repository structure even if it exists
     const structureVerification = await this.repositoryService.verifyRepositoryStructure(username);
     if (!structureVerification.isValid) {
@@ -59,10 +61,12 @@ export class UORDBManager {
       // Repository service will handle repairs
       const repaired = await this.repositoryService.createRepository(username);
       if (!repaired) {
-        throw new Error('Failed to repair repository structure. Some features may not work correctly.');
+        throw new Error(
+          'Failed to repair repository structure. Some features may not work correctly.'
+        );
       }
     }
-    
+
     // Update the last sync time
     await this.syncRepositoryTime(username);
   }
@@ -111,16 +115,16 @@ export class UORDBManager {
     try {
       // Check if the file already exists
       const existingFile = await this.fetchFile(username, path);
-      
+
       // Format the object for storage
       const formattedObject = {
         ...object,
-        lastModified: new Date().toISOString()
+        lastModified: new Date().toISOString(),
       };
-      
+
       // Create or update the file
       const content = JSON.stringify(formattedObject, null, 2);
-      
+
       await this.saveFile(username, path, content, existingFile?.sha);
 
       // Update the last sync time
@@ -132,7 +136,10 @@ export class UORDBManager {
     }
   }
 
-  private async fetchFile(username: string, path: string): Promise<{content: string, sha: string} | null> {
+  private async fetchFile(
+    username: string,
+    path: string
+  ): Promise<{ content: string; sha: string } | null> {
     try {
       const client = this.getGitHubClient();
       client.setOwner(username);
@@ -143,11 +150,16 @@ export class UORDBManager {
     }
   }
 
-  private async saveFile(username: string, path: string, content: string, sha?: string): Promise<boolean> {
+  private async saveFile(
+    username: string,
+    path: string,
+    content: string,
+    sha?: string
+  ): Promise<boolean> {
     try {
       const client = this.getGitHubClient();
       client.setOwner(username);
-      
+
       const message = sha ? `Update ${path}` : `Create ${path}`;
       return await client.createOrUpdateFile(path, message, content, sha);
     } catch (err) {
@@ -164,11 +176,11 @@ export class UORDBManager {
       const path = `${category}/${filename}`;
 
       const file = await this.fetchFile(username, path);
-      
+
       if (!file) {
         return null;
       }
-      
+
       return JSON.parse(file.content) as UORObject;
     } catch (err) {
       const error = err as Error;
@@ -185,7 +197,7 @@ export class UORDBManager {
 
       // Get the file's SHA
       const file = await this.fetchFile(username, path);
-      
+
       if (!file) {
         throw new Error('Object not found');
       }
@@ -207,24 +219,24 @@ export class UORDBManager {
   async listObjects(username: string, type: string): Promise<UORObject[]> {
     try {
       const category = this.getCategoryPath(type);
-      
+
       // Get the list of files in the category directory
       const client = this.getGitHubClient();
       client.setOwner(username);
       const files = await client.listFiles(category);
-      
+
       if (!files) {
         return [];
       }
 
       // Filter out .gitkeep and any other non-JSON files
-      const jsonFiles = files.filter(file => 
-        file.type === 'file' && file.name !== '.gitkeep' && file.name.endsWith('.json')
+      const jsonFiles = files.filter(
+        file => file.type === 'file' && file.name !== '.gitkeep' && file.name.endsWith('.json')
       );
 
       // Fetch the content of each file
       const objects: UORObject[] = [];
-      
+
       for (const file of jsonFiles) {
         const fileData = await client.getFile(`${category}/${file.name}`);
         if (fileData) {
@@ -252,7 +264,7 @@ export class UORDBManager {
     try {
       // Get objects from all categories
       const categories = ['concept', 'resource', 'topic', 'predicate', 'resolver'];
-      
+
       const allObjects: UORObject[] = [];
       for (const category of categories) {
         try {
@@ -263,7 +275,7 @@ export class UORDBManager {
           console.error(`Error fetching ${category} objects:`, categoryErr);
         }
       }
-      
+
       // Simple implementation: search in stringified objects
       // A more advanced implementation would use GitHub's code search API
       const lowerQuery = query.toLowerCase();
