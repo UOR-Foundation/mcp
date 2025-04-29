@@ -39,10 +39,19 @@ export class SchemaLoader {
     }
 
     this.initialized = true;
-    
-    this.addMockSchema('https://uor-foundation.org/schemas/uor-core.schema.json', 'UOR Core Schema');
-    this.addMockSchema('https://uor-foundation.org/schemas/observer-frame.schema.json', 'Observer Frame Schema');
-    this.addMockSchema('https://uor-foundation.org/schemas/uor-axioms.schema.json', 'UOR Axioms Schema');
+
+    this.addMockSchema(
+      'https://uor-foundation.org/schemas/uor-core.schema.json',
+      'UOR Core Schema'
+    );
+    this.addMockSchema(
+      'https://uor-foundation.org/schemas/observer-frame.schema.json',
+      'Observer Frame Schema'
+    );
+    this.addMockSchema(
+      'https://uor-foundation.org/schemas/uor-axioms.schema.json',
+      'UOR Axioms Schema'
+    );
   }
 
   /**
@@ -55,7 +64,7 @@ export class SchemaLoader {
       path: `/mock/path/${id.split('/').pop()}`,
       id,
       title,
-      description: `Mock schema for ${title}`
+      description: `Mock schema for ${title}`,
     };
 
     const schema: JSONSchema7 = {
@@ -64,9 +73,9 @@ export class SchemaLoader {
       title,
       type: 'object',
       properties: {
-        id: { type: 'string' }
+        id: { type: 'string' },
       },
-      required: ['id']
+      required: ['id'],
     };
 
     const validate = (data: any): ValidationResult => {
@@ -75,7 +84,7 @@ export class SchemaLoader {
       }
       return {
         valid: false,
-        errors: [{ message: 'Missing required property: id', path: '/id' }]
+        errors: [{ message: 'Missing required property: id', path: '/id' }],
       };
     };
 
@@ -127,6 +136,5 @@ export class SchemaLoader {
   /**
    * Reload all schemas from file
    */
-  public async reloadAllSchemas(): Promise<void> {
-  }
+  public async reloadAllSchemas(): Promise<void> {}
 }

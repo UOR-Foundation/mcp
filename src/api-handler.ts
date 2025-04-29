@@ -23,8 +23,8 @@ export class APIHandler {
   public async handleAPIRequest(req: Request, res: Response): Promise<void> {
     try {
       // Determine if this is an MCP Protocol JSON-RPC request
-      const isJsonRpc = 
-        req.headers['content-type']?.includes('application/json') && 
+      const isJsonRpc =
+        req.headers['content-type']?.includes('application/json') &&
         (req.body.jsonrpc === '2.0' || Array.isArray(req.body));
 
       if (isJsonRpc) {
@@ -34,12 +34,12 @@ export class APIHandler {
       } else {
         // Legacy API format
         const { method, params } = req.body;
-        
+
         if (!method) {
           res.status(400).json({ error: 'Method is required' });
           return;
         }
-        
+
         try {
           const result = await this.mcpServer.handleRequest(method, params || {});
           res.status(200).json({ result });
@@ -50,11 +50,11 @@ export class APIHandler {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ 
+      res.status(500).json({
         error: {
           code: -32603,
-          message: `Internal server error: ${message}`
-        }
+          message: `Internal server error: ${message}`,
+        },
       });
     }
   }
@@ -71,13 +71,13 @@ export class APIHandler {
       res.status(200).json(response);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ 
+      res.status(500).json({
         jsonrpc: '2.0',
         id: req.body?.id || null,
         error: {
           code: -32603,
-          message: `Internal server error: ${message}`
-        }
+          message: `Internal server error: ${message}`,
+        },
       });
     }
   }

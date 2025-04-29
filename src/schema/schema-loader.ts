@@ -1,14 +1,20 @@
 /**
  * Schema Loader Module
  * Loads and parses JSON schemas from the models/schemas directory
+ * Supports both Node.js and browser environments
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { JSONSchema7 } from 'json-schema';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { LoadedSchema, SchemaSource, SchemaValidator, ValidationResult } from './schema-types';
+
+import coreSchema from '../../models/schemas/uor-core.schema.json';
+import axiomsSchema from '../../models/schemas/uor-axioms.schema.json';
+import observerFrameSchema from '../../models/schemas/observer-frame.schema.json';
+
+const isNode =
+  typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 /**
  * Schema Loader class
@@ -19,6 +25,12 @@ export class SchemaLoader {
   private schemas: Map<string, LoadedSchema> = new Map();
   private ajv: Ajv;
   private schemasDir: string;
+  private defaultSchemas: Record<string, JSONSchema7> = {
+    'https://uor-foundation.org/schemas/uor-core.schema.json': coreSchema as JSONSchema7,
+    'https://uor-foundation.org/schemas/uor-axioms.schema.json': axiomsSchema as JSONSchema7,
+    'https://uor-foundation.org/schemas/observer-frame.schema.json':
+      observerFrameSchema as JSONSchema7,
+  };
 
   /**
    * Private constructor for singleton pattern
@@ -28,12 +40,14 @@ export class SchemaLoader {
       allErrors: true,
       verbose: true,
       $data: true,
-      strict: false
+      strict: false,
     });
-    
+
     addFormats(this.ajv);
-    
-    this.schemasDir = path.resolve(process.cwd(), 'models', 'schemas');
+
+    this.schemasDir = isNode
+      ? require('path').resolve(process.cwd(), 'models', 'schemas')
+      : '/models/schemas';
   }
 
   /**
@@ -49,23 +63,24 @@ export class SchemaLoader {
 
   /**
    * Initialize the schema loader
-   * Loads all schemas from the models/schemas directory
+   * Loads all schemas from the models/schemas directory or uses pre-bundled schemas in browser
    */
   public async initialize(): Promise<void> {
     try {
-      if (!fs.existsSync(this.schemasDir)) {
-        throw new Error(`Schemas directory not found: ${this.schemasDir}`);
-      }
+      this.schemas.clear();
+      this.ajv = new Ajv({
+        allErrors: true,
+        verbose: true,
+        $data: true,
+        strict: false,
+      });
 
-      const schemaFiles = fs.readdirSync(this.schemasDir)
-        .filter(file => file.endsWith('.schema.json'));
+      addFormats(this.ajv);
 
-      if (schemaFiles.length === 0) {
-        throw new Error('No schema files found in schemas directory');
-      }
-
-      for (const file of schemaFiles) {
-        await this.loadSchema(file);
+      if (isNode) {
+        await this.initializeNode();
+      } else {
+        await this.initializeBrowser();
       }
 
       console.log(`Loaded ${this.schemas.size} schemas successfully`);
@@ -76,11 +91,47 @@ export class SchemaLoader {
   }
 
   /**
-   * Load a schema from file
+   * Initialize in Node.js environment
+   */
+  private async initializeNode(): Promise<void> {
+    const fs = require('fs');
+    const path = require('path');
+
+    if (!fs.existsSync(this.schemasDir)) {
+      throw new Error(`Schemas directory not found: ${this.schemasDir}`);
+    }
+
+    const schemaFiles = fs
+      .readdirSync(this.schemasDir)
+      .filter((file: string) => file.endsWith('.schema.json'));
+
+    if (schemaFiles.length === 0) {
+      throw new Error('No schema files found in schemas directory');
+    }
+
+    for (const file of schemaFiles) {
+      await this.loadSchemaNode(file);
+    }
+  }
+
+  /**
+   * Initialize in browser environment
+   */
+  private async initializeBrowser(): Promise<void> {
+    for (const [schemaId, schema] of Object.entries(this.defaultSchemas)) {
+      await this.loadSchemaBrowser(schemaId, schema);
+    }
+  }
+
+  /**
+   * Load a schema from file in Node.js environment
    * @param fileName Schema file name
    */
-  private async loadSchema(fileName: string): Promise<void> {
+  private async loadSchemaNode(fileName: string): Promise<void> {
     try {
+      const fs = require('fs');
+      const path = require('path');
+
       const filePath = path.join(this.schemasDir, fileName);
       const schemaContent = fs.readFileSync(filePath, 'utf8');
       const schema = JSON.parse(schemaContent) as JSONSchema7;
@@ -94,7 +145,7 @@ export class SchemaLoader {
         path: filePath,
         id: schemaId,
         title: schema.title || fileName,
-        description: schema.description
+        description: schema.description,
       };
 
       const validate = this.compileValidator(schema);
@@ -102,13 +153,47 @@ export class SchemaLoader {
       const loadedSchema: LoadedSchema = {
         source: schemaSource,
         schema,
-        validate
+        validate,
       };
 
       this.schemas.set(schemaId, loadedSchema);
       console.log(`Loaded schema: ${schemaId}`);
     } catch (error) {
       console.error(`Error loading schema ${fileName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Load a pre-bundled schema in browser environment
+   * @param schemaId Schema ID
+   * @param schema Schema object
+   */
+  private async loadSchemaBrowser(schemaId: string, schema: JSONSchema7): Promise<void> {
+    try {
+      if (!schema.$id) {
+        throw new Error(`Schema is missing $id property`);
+      }
+
+      const schemaSource: SchemaSource = {
+        path: `${this.schemasDir}/${schemaId.split('/').pop()}`,
+        id: schemaId,
+        title: schema.title || schemaId.split('/').pop() || '',
+        description: schema.description,
+      };
+
+      const validate = this.compileValidator(schema);
+
+      const loadedSchema: LoadedSchema = {
+        source: schemaSource,
+        schema,
+        validate,
+      };
+
+      this.schemas.set(schemaId, loadedSchema);
+      console.log(`Loaded schema: ${schemaId}`);
+    } catch (error) {
+      console.error(`Error loading schema ${schemaId}:`, error);
       throw error;
     }
   }
@@ -124,7 +209,7 @@ export class SchemaLoader {
 
       const validator: SchemaValidator = (data: any): ValidationResult => {
         const valid = ajvValidate(data);
-        
+
         if (valid) {
           return { valid: true };
         } else {
@@ -135,8 +220,8 @@ export class SchemaLoader {
               path: err.instancePath,
               keyword: err.keyword,
               schemaPath: err.schemaPath,
-              instancePath: err.instancePath
-            }))
+              instancePath: err.instancePath,
+            })),
           };
         }
       };
@@ -190,8 +275,18 @@ export class SchemaLoader {
       throw new Error(`Schema not found: ${schemaId}`);
     }
 
-    const fileName = path.basename(schema.source.path);
-    await this.loadSchema(fileName);
+    if (isNode) {
+      const path = require('path');
+      const fileName = path.basename(schema.source.path);
+      await this.loadSchemaNode(fileName);
+    } else {
+      const defaultSchema = this.defaultSchemas[schemaId];
+      if (defaultSchema) {
+        await this.loadSchemaBrowser(schemaId, defaultSchema);
+      } else {
+        throw new Error(`Schema not found in browser environment: ${schemaId}`);
+      }
+    }
   }
 
   /**

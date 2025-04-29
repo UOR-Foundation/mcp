@@ -13,7 +13,7 @@ export enum ContentType {
   RESOURCE = 'resource',
   TOPIC = 'topic',
   PREDICATE = 'predicate',
-  MEDIA = 'media'
+  MEDIA = 'media',
 }
 
 /**

@@ -13,18 +13,21 @@ import { DecompositionManager } from '../decomposition/decomposition-manager';
 export function initializeDecompositionForUORObjects(): void {
   const decompositionManager = DecompositionManager.getInstance();
   decompositionManager.initialize();
-  
+
   const originalComputePrimeDecomposition = UORObject.prototype.computePrimeDecomposition;
   const originalComputeCanonicalRepresentation = UORObject.prototype.computeCanonicalRepresentation;
-  
-  UORObject.prototype.computePrimeDecomposition = function(): PrimeDecomposition {
-    if (this.constructor.prototype.hasOwnProperty('computePrimeDecomposition') && 
-        this.constructor.prototype.computePrimeDecomposition !== UORObject.prototype.computePrimeDecomposition) {
+
+  UORObject.prototype.computePrimeDecomposition = function (): PrimeDecomposition {
+    if (
+      this.constructor.prototype.hasOwnProperty('computePrimeDecomposition') &&
+      this.constructor.prototype.computePrimeDecomposition !==
+        UORObject.prototype.computePrimeDecomposition
+    ) {
       return originalComputePrimeDecomposition.call(this);
     }
-    
+
     let domain: string;
-    
+
     switch (this.type.toLowerCase()) {
       case 'concept':
       case 'resource':
@@ -53,36 +56,39 @@ export function initializeDecompositionForUORObjects(): void {
           return decompositionManager.decompose(this.serialize());
         } catch (error) {
           console.warn(`Could not determine domain for object type: ${this.type}`);
-          
+
           return {
             primeFactors: [],
-            decompositionMethod: 'fallback'
+            decompositionMethod: 'fallback',
           };
         }
     }
-    
+
     try {
       return decompositionManager.decompose(this.serialize(), domain);
     } catch (error) {
       console.warn(`Error decomposing object of type ${this.type}:`, error);
-      
+
       return {
         primeFactors: [],
-        decompositionMethod: 'fallback'
+        decompositionMethod: 'fallback',
       };
     }
   };
-  
-  UORObject.prototype.computeCanonicalRepresentation = function(): CanonicalRepresentation {
-    if (this.constructor.prototype.hasOwnProperty('computeCanonicalRepresentation') && 
-        this.constructor.prototype.computeCanonicalRepresentation !== UORObject.prototype.computeCanonicalRepresentation) {
+
+  UORObject.prototype.computeCanonicalRepresentation = function (): CanonicalRepresentation {
+    if (
+      this.constructor.prototype.hasOwnProperty('computeCanonicalRepresentation') &&
+      this.constructor.prototype.computeCanonicalRepresentation !==
+        UORObject.prototype.computeCanonicalRepresentation
+    ) {
       return originalComputeCanonicalRepresentation.call(this);
     }
-    
+
     const decomposition = this.computePrimeDecomposition();
-    
+
     let domain: string;
-    
+
     switch (this.type.toLowerCase()) {
       case 'concept':
       case 'resource':
@@ -109,18 +115,21 @@ export function initializeDecompositionForUORObjects(): void {
       default:
         return {
           representationType: 'basic',
-          value: this.serialize()
+          value: this.serialize(),
         };
     }
-    
+
     try {
       return decompositionManager.computeCanonical(decomposition, domain);
     } catch (error) {
-      console.warn(`Error computing canonical representation for object of type ${this.type}:`, error);
-      
+      console.warn(
+        `Error computing canonical representation for object of type ${this.type}:`,
+        error
+      );
+
       return {
         representationType: 'basic',
-        value: this.serialize()
+        value: this.serialize(),
       };
     }
   };

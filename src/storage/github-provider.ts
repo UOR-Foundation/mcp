@@ -4,7 +4,7 @@
  */
 
 import { BaseStorageProvider, StorageProviderConfig, StorageResult } from './storage-provider';
-import { UORObject } from '../github/uordb-manager';
+import { UORObject } from '../core/uor-core';
 import { GitHubClient } from '../github/github-client';
 import { RepositoryService } from '../github/repository-service';
 
@@ -14,13 +14,13 @@ import { RepositoryService } from '../github/repository-service';
 export class GitHubStorageProvider extends BaseStorageProvider {
   private githubClient: GitHubClient;
   private repositoryService: RepositoryService;
-  
+
   constructor() {
     super();
     this.githubClient = new GitHubClient();
     this.repositoryService = new RepositoryService(this.githubClient);
   }
-  
+
   /**
    * Initialize the GitHub storage provider
    * @param config Provider configuration
@@ -29,12 +29,12 @@ export class GitHubStorageProvider extends BaseStorageProvider {
     if (config.type !== 'github') {
       throw new Error('Invalid provider type for GitHubStorageProvider');
     }
-    
+
     this.config = config;
-    
+
     if (config.authentication) {
       const { type, credentials } = config.authentication;
-      
+
       if (type === 'token' && credentials.token) {
         this.githubClient.setToken(credentials.token);
         return true;
@@ -42,10 +42,10 @@ export class GitHubStorageProvider extends BaseStorageProvider {
         throw new Error('Invalid authentication type or missing credentials');
       }
     }
-    
+
     return true;
   }
-  
+
   /**
    * Check if the GitHub provider is available
    */
@@ -58,7 +58,7 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       return false;
     }
   }
-  
+
   /**
    * Store a UOR object in GitHub
    * @param username User namespace
@@ -69,33 +69,33 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       if (!object.id || !object.type) {
         throw new Error('UOR object must have id and type properties');
       }
-      
+
       const category = this.getCategoryPath(object.type);
       const filename = this.getObjectFilename(object.id);
       const path = `${category}/${filename}`;
-      
+
       const existingFile = await this.fetchFile(username, path);
-      
+
       const formattedObject = {
         ...object,
-        lastModified: new Date().toISOString()
+        lastModified: new Date().toISOString(),
       };
-      
+
       const content = JSON.stringify(formattedObject, null, 2);
-      
+
       const success = await this.saveFile(username, path, content, existingFile?.sha);
-      
+
       if (success) {
         await this.repositoryService.updateLastSyncTime(username);
-        
+
         return {
           success: true,
-          identifier: path
+          identifier: path,
         };
       } else {
         return {
           success: false,
-          error: 'Failed to store object in GitHub'
+          error: 'Failed to store object in GitHub',
         };
       }
     } catch (error) {
@@ -103,11 +103,11 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       console.error('Error storing UOR object in GitHub:', err);
       return {
         success: false,
-        error: err.message
+        error: err.message,
       };
     }
   }
-  
+
   /**
    * Retrieve a UOR object from GitHub
    * @param username User namespace
@@ -119,20 +119,20 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       const category = this.getCategoryPath(type);
       const filename = this.getObjectFilename(id);
       const path = `${category}/${filename}`;
-      
+
       const file = await this.fetchFile(username, path);
-      
+
       if (!file) {
         return null;
       }
-      
+
       return JSON.parse(file.content) as UORObject;
     } catch (error) {
       console.error('Error getting UOR object from GitHub:', error);
       return null;
     }
   }
-  
+
   /**
    * Delete a UOR object from GitHub
    * @param username User namespace
@@ -144,34 +144,34 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       const category = this.getCategoryPath(type);
       const filename = this.getObjectFilename(id);
       const path = `${category}/${filename}`;
-      
+
       const file = await this.fetchFile(username, path);
-      
+
       if (!file) {
         return {
           success: false,
-          error: 'Object not found'
+          error: 'Object not found',
         };
       }
-      
+
       this.githubClient.setOwner(username);
       await this.githubClient.deleteFile(path, `Delete ${path}`, file.sha);
-      
+
       await this.repositoryService.updateLastSyncTime(username);
-      
+
       return {
-        success: true
+        success: true,
       };
     } catch (error) {
       const err = error as Error;
       console.error('Error deleting UOR object from GitHub:', err);
       return {
         success: false,
-        error: err.message
+        error: err.message,
       };
     }
   }
-  
+
   /**
    * List UOR objects of a specific type from GitHub
    * @param username User namespace
@@ -180,20 +180,20 @@ export class GitHubStorageProvider extends BaseStorageProvider {
   async listObjects(username: string, type: string): Promise<UORObject[]> {
     try {
       const category = this.getCategoryPath(type);
-      
+
       this.githubClient.setOwner(username);
       const files = await this.githubClient.listFiles(category);
-      
+
       if (!files) {
         return [];
       }
-      
-      const jsonFiles = files.filter(file => 
-        file.type === 'file' && file.name !== '.gitkeep' && file.name.endsWith('.json')
+
+      const jsonFiles = files.filter(
+        file => file.type === 'file' && file.name !== '.gitkeep' && file.name.endsWith('.json')
       );
-      
+
       const objects: UORObject[] = [];
-      
+
       for (const file of jsonFiles) {
         const fileData = await this.githubClient.getFile(`${category}/${file.name}`);
         if (fileData) {
@@ -205,14 +205,14 @@ export class GitHubStorageProvider extends BaseStorageProvider {
           }
         }
       }
-      
+
       return objects;
     } catch (error) {
       console.error(`Error listing UOR objects of type ${type} from GitHub:`, error);
       return [];
     }
   }
-  
+
   /**
    * Store large content in GitHub
    * @param username User namespace
@@ -220,100 +220,103 @@ export class GitHubStorageProvider extends BaseStorageProvider {
    * @param metadata Content metadata
    */
   async storeLargeContent(
-    username: string, 
-    content: Buffer | string, 
+    username: string,
+    content: Buffer | string,
     metadata: Record<string, any>
   ): Promise<StorageResult> {
     try {
       const contentStr = content instanceof Buffer ? content.toString('base64') : content;
       const contentType = content instanceof Buffer ? 'binary' : 'text';
-      
+
       const filename = `${metadata.id || Date.now()}.${metadata.extension || 'dat'}`;
       const path = `artifacts/${filename}`;
-      
+
       this.githubClient.setOwner(username);
       const success = await this.githubClient.createOrUpdateFile(
         path,
         `Store artifact ${filename}`,
-        contentStr,
+        contentStr.toString(),
         undefined
       );
-      
+
       if (!success) {
         return {
           success: false,
-          error: 'Failed to store large content in GitHub'
+          error: 'Failed to store large content in GitHub',
         };
       }
-      
+
       const metadataPath = `artifacts/${filename}.meta.json`;
-      const metadataContent = JSON.stringify({
-        ...metadata,
-        contentType,
-        path,
-        createdAt: new Date().toISOString()
-      }, null, 2);
-      
+      const metadataContent = JSON.stringify(
+        {
+          ...metadata,
+          contentType,
+          path,
+          createdAt: new Date().toISOString(),
+        },
+        null,
+        2
+      );
+
       await this.githubClient.createOrUpdateFile(
         metadataPath,
         `Store artifact metadata for ${filename}`,
         metadataContent
       );
-      
+
       return {
         success: true,
-        identifier: path
+        identifier: path,
       };
     } catch (error) {
       const err = error as Error;
       console.error('Error storing large content in GitHub:', err);
       return {
         success: false,
-        error: err.message
+        error: err.message,
       };
     }
   }
-  
+
   /**
    * Retrieve large content from GitHub
    * @param username User namespace
    * @param identifier Content identifier
    */
   async getLargeContent(
-    username: string, 
+    username: string,
     identifier: string
-  ): Promise<{content: Buffer | string, metadata: Record<string, any>} | null> {
+  ): Promise<{ content: Buffer | string; metadata: Record<string, any> } | null> {
     try {
       this.githubClient.setOwner(username);
       const file = await this.githubClient.getFile(identifier);
-      
+
       if (!file) {
         return null;
       }
-      
+
       const metadataPath = `${identifier}.meta.json`;
       const metadataFile = await this.githubClient.getFile(metadataPath);
-      
+
       if (!metadataFile) {
         return null;
       }
-      
+
       const metadata = JSON.parse(metadataFile.content);
-      
-      const content = metadata.contentType === 'binary' 
-        ? Buffer.from(file.content, 'base64')
-        : file.content;
-      
+
+      const content =
+        metadata.contentType === 'binary' ? Buffer.from(file.content, 'base64') : file.content;
+
       return {
         content,
-        metadata
+        metadata,
       };
     } catch (error) {
       console.error('Error retrieving large content from GitHub:', error);
       return null;
     }
   }
-  
+
   /**
    * Get the category path for a UOR object type
    * @param type Object type
@@ -340,7 +343,7 @@ export class GitHubStorageProvider extends BaseStorageProvider {
         throw new Error(`Unknown UOR object type: ${type}`);
     }
   }
-  
+
   /**
    * Get the filename for a UOR object
    * @param id Object ID
@@ -349,13 +352,16 @@ export class GitHubStorageProvider extends BaseStorageProvider {
     const cleanId = id.split('/').pop() || id;
     return `${cleanId}.json`;
   }
-  
+
   /**
    * Fetch a file from GitHub
    * @param username User namespace
    * @param path File path
    */
-  private async fetchFile(username: string, path: string): Promise<{content: string, sha: string} | null> {
+  private async fetchFile(
+    username: string,
+    path: string
+  ): Promise<{ content: string; sha: string } | null> {
     try {
       this.githubClient.setOwner(username);
       return await this.githubClient.getFile(path);
@@ -363,7 +369,7 @@ export class GitHubStorageProvider extends BaseStorageProvider {
       return null;
     }
   }
-  
+
   /**
    * Save a file to GitHub
    * @param username User namespace
@@ -371,10 +377,15 @@ export class GitHubStorageProvider extends BaseStorageProvider {
    * @param content File content
    * @param sha File SHA (for updates)
    */
-  private async saveFile(username: string, path: string, content: string, sha?: string): Promise<boolean> {
+  private async saveFile(
+    username: string,
+    path: string,
+    content: string,
+    sha?: string
+  ): Promise<boolean> {
     try {
       this.githubClient.setOwner(username);
-      
+
       const message = sha ? `Update ${path}` : `Create ${path}`;
       return await this.githubClient.createOrUpdateFile(path, message, content, sha);
     } catch (error) {

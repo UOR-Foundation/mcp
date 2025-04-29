@@ -3,7 +3,14 @@
  * Implements thread objects in the UOR system
  */
 
-import { UORObject, CanonicalRepresentation, PrimeDecomposition, ObserverFrame, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
+import {
+  UORObject,
+  CanonicalRepresentation,
+  PrimeDecomposition,
+  ObserverFrame,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
 import { MessageThread, ThreadUORObject } from './message-types';
 
 /**
@@ -19,7 +26,7 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
    */
   constructor(id: string, data: Partial<MessageThread>) {
     super(id, 'thread');
-    
+
     this.data = {
       id: id,
       title: data.title || '',
@@ -29,7 +36,7 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
       updatedAt: data.updatedAt || new Date(),
       createdBy: data.createdBy || '',
       tags: data.tags || [],
-      ...data
+      ...data,
     };
   }
 
@@ -49,7 +56,7 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
     this.data = {
       ...this.data,
       ...thread,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -101,7 +108,7 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
     if (!this.data.tags) {
       this.data.tags = [];
     }
-    
+
     if (!this.data.tags.includes(tag)) {
       this.data.tags.push(tag);
       this.data.updatedAt = new Date();
@@ -139,49 +146,49 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
       {
         id: `thread:${this.id}`,
         value: { id: this.id, type: 'thread' },
-        domain: 'thread'
+        domain: 'thread',
       },
       {
         id: `thread:title:${this.data.title}`,
         value: { title: this.data.title },
-        domain: 'thread.title'
+        domain: 'thread.title',
       },
       {
         id: `thread:creator:${this.data.createdBy}`,
         value: { createdBy: this.data.createdBy },
-        domain: 'thread.creator'
-      }
+        domain: 'thread.creator',
+      },
     ];
-    
+
     this.data.participants.forEach(participant => {
       primeFactors.push({
         id: `thread:participant:${participant}`,
         value: { participant },
-        domain: 'thread.participant'
+        domain: 'thread.participant',
       });
     });
-    
+
     this.data.messageIds.forEach(messageId => {
       primeFactors.push({
         id: `thread:message:${messageId}`,
         value: { messageId },
-        domain: 'thread.message'
+        domain: 'thread.message',
       });
     });
-    
+
     if (this.data.tags && this.data.tags.length > 0) {
       this.data.tags.forEach(tag => {
         primeFactors.push({
           id: `thread:tag:${tag}`,
           value: { tag },
-          domain: 'thread.tag'
+          domain: 'thread.tag',
         });
       });
     }
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'thread-decomposition'
+      decompositionMethod: 'thread-decomposition',
     };
   }
 
@@ -198,13 +205,13 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
       createdAt: this.data.createdAt.toISOString(),
       updatedAt: this.data.updatedAt.toISOString(),
       createdBy: this.data.createdBy,
-      tags: this.data.tags ? [...this.data.tags].sort() : []
+      tags: this.data.tags ? [...this.data.tags].sort() : [],
     };
-    
+
     return {
       representationType: 'thread-canonical',
       value: canonicalData,
-      coherenceNorm: this.measureCoherence().value
+      coherenceNorm: this.measureCoherence().value,
     };
   }
 
@@ -214,18 +221,18 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
    */
   measureCoherence(): CoherenceMeasure {
     let coherenceScore = 0;
-    
+
     if (this.data.title && this.data.title.length > 0) coherenceScore += 0.1;
     if (this.data.createdBy) coherenceScore += 0.1;
-    
+
     coherenceScore += Math.min(0.3, this.data.participants.length * 0.05);
-    
+
     coherenceScore += Math.min(0.5, this.data.messageIds.length * 0.05);
-    
+
     return {
       type: 'thread-coherence',
       value: coherenceScore,
-      normalization: 'linear-sum'
+      normalization: 'linear-sum',
     };
   }
 
@@ -240,11 +247,12 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
       data: {
         ...this.data,
         createdAt: this.data.createdAt.toISOString(),
-        updatedAt: this.data.updatedAt.toISOString()
+        updatedAt: this.data.updatedAt.toISOString(),
       },
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
       primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
-      observerFrame: this.observerFrame
+      observerFrame: this.observerFrame,
     };
   }
 
@@ -256,15 +264,15 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
     if (!this.data.id || this.data.id !== this.id) {
       return false;
     }
-    
+
     if (!this.data.title || this.data.title.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.createdBy || this.data.createdBy.trim() === '') {
       return false;
     }
-    
+
     return true;
   }
 
@@ -277,8 +285,8 @@ export class ThreadObject extends UORObject implements ThreadUORObject {
       {
         id: 'thread:core',
         value: { type: 'thread' },
-        domain: 'thread'
-      }
+        domain: 'thread',
+      },
     ];
   }
 }

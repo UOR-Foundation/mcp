@@ -3,8 +3,8 @@
  * Aligned with MCP specification v2025-03-26
  */
 
-export const JSONRPC_VERSION = "2.0";
-export const MCP_PROTOCOL_VERSION = "2025-03-26";
+export const JSONRPC_VERSION = '2.0';
+export const MCP_PROTOCOL_VERSION = '2025-03-26';
 
 /**
  * A uniquely identifying ID for a request in JSON-RPC.
@@ -89,7 +89,7 @@ export enum JSONRPCErrorCode {
   AuthenticationRequired = -32000,
   PermissionDenied = -32001,
   ResourceNotFound = -32002,
-  ValidationError = -32003
+  ValidationError = -32003,
 }
 
 // MCP Tool specification
@@ -97,7 +97,7 @@ export interface MCPTool {
   name: string;
   description?: string;
   inputSchema: {
-    type: "object";
+    type: 'object';
     properties?: Record<string, any>;
     required?: string[];
   };
@@ -129,7 +129,7 @@ export interface MCPResource {
 
 // General annotations
 export interface MCPAnnotations {
-  audience?: ("user" | "assistant")[];
+  audience?: ('user' | 'assistant')[];
   priority?: number;
 }
 

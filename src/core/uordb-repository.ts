@@ -9,7 +9,7 @@ import mcpServer from '../mcp/mcp-server';
 export class UORdbRepository {
   private uordbManager: UORDBManager | null = null;
   private username: string | null = null;
-  
+
   constructor() {}
 
   /**
@@ -18,11 +18,11 @@ export class UORdbRepository {
    */
   public async initialize(username: string): Promise<void> {
     this.username = username;
-    
+
     if (!mcpServer.isAuthenticated()) {
       throw new Error('MCP Server must be authenticated before initializing UORdb Repository');
     }
-    
+
     try {
       await mcpServer.initializeRepository();
     } catch (err) {
@@ -40,7 +40,7 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.getRepositoryStatus();
     } catch (err) {
@@ -58,11 +58,11 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.handleRequest('uor.create', {
         type: object.type,
-        data: object
+        data: object,
       });
     } catch (err) {
       const error = err as Error;
@@ -80,13 +80,13 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       const reference = `uor://${type}/${id}`;
       const result = await mcpServer.handleRequest('uor.resolve', {
-        reference
+        reference,
       });
-      
+
       if (result) {
         return result.data as any as UORObject;
       }
@@ -107,11 +107,11 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.handleRequest('uor.update', {
         reference,
-        data
+        data,
       });
     } catch (err) {
       const error = err as Error;
@@ -128,10 +128,10 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.handleRequest('uor.delete', {
-        reference
+        reference,
       });
     } catch (err) {
       const error = err as Error;
@@ -148,7 +148,7 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.handleRequest('uordb.list', { type });
     } catch (err) {
@@ -166,7 +166,7 @@ export class UORdbRepository {
     if (!this.username) {
       throw new Error('Repository not initialized');
     }
-    
+
     try {
       return await mcpServer.handleRequest('uordb.search', { query });
     } catch (err) {

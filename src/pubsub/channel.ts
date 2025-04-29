@@ -3,7 +3,14 @@
  * Implements channel objects in the UOR system
  */
 
-import { UORObject, CanonicalRepresentation, PrimeDecomposition, ObserverFrame, CoherenceMeasure, PrimeFactor } from '../core/uor-core';
+import {
+  UORObject,
+  CanonicalRepresentation,
+  PrimeDecomposition,
+  ObserverFrame,
+  CoherenceMeasure,
+  PrimeFactor,
+} from '../core/uor-core';
 import { Channel, ChannelVisibility, ChannelUORObject } from './event-types';
 
 /**
@@ -19,7 +26,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
    */
   constructor(id: string, data: Partial<Channel>) {
     super(id, 'channel');
-    
+
     this.data = {
       id: id,
       name: data.name || '',
@@ -32,7 +39,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       createdBy: data.createdBy || '',
       tags: data.tags || [],
       metadata: data.metadata || {},
-      ...data
+      ...data,
     };
   }
 
@@ -52,7 +59,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
     this.data = {
       ...this.data,
       ...channel,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
@@ -93,7 +100,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
   addMetadata(key: string, value: any): void {
     this.data.metadata = {
       ...this.data.metadata,
-      [key]: value
+      [key]: value,
     };
     this.data.updatedAt = new Date();
   }
@@ -128,54 +135,54 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       {
         id: `channel:${this.id}`,
         value: { id: this.id, type: 'channel' },
-        domain: 'channel'
+        domain: 'channel',
       },
       {
         id: `channel:name:${this.data.name}`,
         value: { name: this.data.name },
-        domain: 'channel.name'
+        domain: 'channel.name',
       },
       {
         id: `channel:namespace:${this.data.namespace}`,
         value: { namespace: this.data.namespace },
-        domain: 'channel.namespace'
+        domain: 'channel.namespace',
       },
       {
         id: `channel:contentType:${this.data.contentType}`,
         value: { contentType: this.data.contentType },
-        domain: 'channel.contentType'
+        domain: 'channel.contentType',
       },
       {
         id: `channel:visibility:${this.data.visibility}`,
         value: { visibility: this.data.visibility },
-        domain: 'channel.visibility'
+        domain: 'channel.visibility',
       },
       {
         id: `channel:creator:${this.data.createdBy}`,
         value: { createdBy: this.data.createdBy },
-        domain: 'channel.creator'
-      }
+        domain: 'channel.creator',
+      },
     ];
-    
+
     this.data.tags.forEach(tag => {
       primeFactors.push({
         id: `channel:tag:${tag}`,
         value: { tag },
-        domain: 'channel.tag'
+        domain: 'channel.tag',
       });
     });
-    
+
     Object.entries(this.data.metadata).forEach(([key, value]) => {
       primeFactors.push({
         id: `channel:metadata:${key}:${JSON.stringify(value)}`,
         value: { [key]: value },
-        domain: 'channel.metadata'
+        domain: 'channel.metadata',
       });
     });
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'channel-decomposition'
+      decompositionMethod: 'channel-decomposition',
     };
   }
 
@@ -195,13 +202,13 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       updatedAt: this.data.updatedAt.toISOString(),
       createdBy: this.data.createdBy,
       tags: [...this.data.tags].sort(),
-      metadata: this.canonicalizeMetadata()
+      metadata: this.canonicalizeMetadata(),
     };
-    
+
     return {
       representationType: 'channel-canonical',
       value: canonicalData,
-      coherenceNorm: this.measureCoherence().value
+      coherenceNorm: this.measureCoherence().value,
     };
   }
 
@@ -211,13 +218,13 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
    */
   private canonicalizeMetadata(): object {
     const result: Record<string, any> = {};
-    
+
     const sortedKeys = Object.keys(this.data.metadata).sort();
-    
+
     for (const key of sortedKeys) {
       result[key] = this.data.metadata[key];
     }
-    
+
     return result;
   }
 
@@ -227,23 +234,23 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
    */
   measureCoherence(): CoherenceMeasure {
     let coherenceScore = 0;
-    
+
     if (this.data.id) coherenceScore += 0.05;
     if (this.data.name) coherenceScore += 0.1;
     if (this.data.description) coherenceScore += 0.1;
     if (this.data.namespace) coherenceScore += 0.1;
     if (this.data.contentType) coherenceScore += 0.1;
     if (this.data.createdBy) coherenceScore += 0.05;
-    
+
     coherenceScore += Math.min(0.2, this.data.tags.length * 0.05);
-    
+
     const metadataCount = Object.keys(this.data.metadata).length;
     coherenceScore += Math.min(0.3, metadataCount * 0.05);
-    
+
     return {
       type: 'channel-coherence',
       value: coherenceScore,
-      normalization: 'linear-sum'
+      normalization: 'linear-sum',
     };
   }
 
@@ -258,11 +265,12 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       data: {
         ...this.data,
         createdAt: this.data.createdAt.toISOString(),
-        updatedAt: this.data.updatedAt.toISOString()
+        updatedAt: this.data.updatedAt.toISOString(),
       },
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation(),
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
       primeDecomposition: this.primeDecomposition || this.computePrimeDecomposition(),
-      observerFrame: this.observerFrame
+      observerFrame: this.observerFrame,
     };
   }
 
@@ -274,23 +282,23 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
     if (!this.data.id || this.data.id !== this.id) {
       return false;
     }
-    
+
     if (!this.data.name || this.data.name.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.namespace || this.data.namespace.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.contentType || this.data.contentType.trim() === '') {
       return false;
     }
-    
+
     if (!this.data.createdBy || this.data.createdBy.trim() === '') {
       return false;
     }
-    
+
     return true;
   }
 
@@ -303,8 +311,8 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       {
         id: 'channel:core',
         value: { type: 'channel' },
-        domain: 'channel'
-      }
+        domain: 'channel',
+      },
     ];
   }
 }

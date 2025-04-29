@@ -2,11 +2,11 @@
  * UOR Coherence Utilities
  * Provides advanced coherence metrics and measurement algorithms
  */
-import { 
-  UORObject, 
-  CoherenceMeasure, 
-  CanonicalRepresentation, 
-  PrimeDecomposition 
+import {
+  UORObject,
+  CoherenceMeasure,
+  CanonicalRepresentation,
+  PrimeDecomposition,
 } from './uor-core';
 
 /**
@@ -18,7 +18,7 @@ export enum CoherenceMetricType {
   OBSERVER_INVARIANCE = 'observer-invariance',
   TRILATERAL_COHERENCE = 'trilateral-coherence',
   INFORMATION_DENSITY = 'information-density',
-  STRUCTURAL_INTEGRITY = 'structural-integrity'
+  STRUCTURAL_INTEGRITY = 'structural-integrity',
 }
 
 /**
@@ -28,7 +28,7 @@ export enum CoherenceNormalization {
   UNIT_NORMALIZED = 'unit-normalized',
   LOG_NORMALIZED = 'log-normalized',
   EXPONENTIAL_NORMALIZED = 'exponential-normalized',
-  RELATIVE_NORMALIZED = 'relative-normalized'
+  RELATIVE_NORMALIZED = 'relative-normalized',
 }
 
 /**
@@ -47,25 +47,25 @@ export class CoherenceMetrics {
       return {
         type: CoherenceMetricType.REPRESENTATION_COMPLETENESS,
         value: 0.5, // Default value without full components
-        normalization: CoherenceNormalization.UNIT_NORMALIZED
+        normalization: CoherenceNormalization.UNIT_NORMALIZED,
       };
     }
 
     // Ratio of prime factors to representation size
     const factorCount = obj.primeDecomposition.primeFactors.length;
     const representationSize = JSON.stringify(obj.canonicalRepresentation.value).length;
-    
+
     // Higher ratio indicates better coherence (more factors, concise representation)
     const coherenceValue = Math.min(1.0, factorCount / (Math.log(representationSize) + 1));
-    
+
     return {
       type: CoherenceMetricType.REPRESENTATION_COMPLETENESS,
       value: coherenceValue,
       normalization: CoherenceNormalization.UNIT_NORMALIZED,
-      referenceFrame: obj.observerFrame?.id
+      referenceFrame: obj.observerFrame?.id,
     };
   }
-  
+
   /**
    * Measures prime factor integrity coherence
    * This metric quantifies the uniqueness and irreducibility of prime factors
@@ -77,33 +77,34 @@ export class CoherenceMetrics {
       return {
         type: CoherenceMetricType.PRIME_FACTOR_INTEGRITY,
         value: 0.0,
-        normalization: CoherenceNormalization.UNIT_NORMALIZED
+        normalization: CoherenceNormalization.UNIT_NORMALIZED,
       };
     }
-    
+
     // Check for factor uniqueness (no duplicated factor IDs)
     const factorIds = decomposition.primeFactors.map(factor => factor.id);
     const uniqueFactorIds = new Set(factorIds);
-    
+
     // Factor uniqueness ratio
     const uniquenessRatio = uniqueFactorIds.size / factorIds.length;
-    
+
     // Average factor complexity (simple factors preferred)
-    const avgComplexity = decomposition.primeFactors.reduce((sum, factor) => {
-      const complexity = JSON.stringify(factor.value).length;
-      return sum + Math.min(1.0, 10 / complexity); // Higher score for simpler factors
-    }, 0) / decomposition.primeFactors.length;
-    
+    const avgComplexity =
+      decomposition.primeFactors.reduce((sum, factor) => {
+        const complexity = JSON.stringify(factor.value).length;
+        return sum + Math.min(1.0, 10 / complexity); // Higher score for simpler factors
+      }, 0) / decomposition.primeFactors.length;
+
     // Combined measure
     const coherenceValue = (uniquenessRatio + avgComplexity) / 2;
-    
+
     return {
       type: CoherenceMetricType.PRIME_FACTOR_INTEGRITY,
       value: coherenceValue,
-      normalization: CoherenceNormalization.UNIT_NORMALIZED
+      normalization: CoherenceNormalization.UNIT_NORMALIZED,
     };
   }
-  
+
   /**
    * Measures observer invariance coherence
    * This metric quantifies how well essential properties are preserved across observers
@@ -120,10 +121,10 @@ export class CoherenceMetrics {
       type: CoherenceMetricType.OBSERVER_INVARIANCE,
       value: 1.0, // Assume perfect invariance in our implementation
       normalization: CoherenceNormalization.UNIT_NORMALIZED,
-      referenceFrame
+      referenceFrame,
     };
   }
-  
+
   /**
    * Measures trilateral coherence
    * This metric quantifies the coherence between object, representation, and observer
@@ -136,10 +137,10 @@ export class CoherenceMetrics {
       return {
         type: CoherenceMetricType.TRILATERAL_COHERENCE,
         value: 0.5, // Default value without full components
-        normalization: CoherenceNormalization.UNIT_NORMALIZED
+        normalization: CoherenceNormalization.UNIT_NORMALIZED,
       };
     }
-    
+
     // Measure sub-coherences
     const representationCompleteness = this.measureRepresentationCompleteness(obj).value;
     const primeFactorIntegrity = this.measurePrimeFactorIntegrity(obj.primeDecomposition).value;
@@ -147,18 +148,19 @@ export class CoherenceMetrics {
       obj.canonicalRepresentation,
       obj.observerFrame.id
     ).value;
-    
+
     // Aggregate the sub-measures
-    const coherenceValue = (representationCompleteness + primeFactorIntegrity + observerInvariance) / 3;
-    
+    const coherenceValue =
+      (representationCompleteness + primeFactorIntegrity + observerInvariance) / 3;
+
     return {
       type: CoherenceMetricType.TRILATERAL_COHERENCE,
       value: coherenceValue,
       normalization: CoherenceNormalization.UNIT_NORMALIZED,
-      referenceFrame: obj.observerFrame?.id
+      referenceFrame: obj.observerFrame?.id,
     };
   }
-  
+
   /**
    * Computes the optimal coherence measure for an object
    * @param obj The UOR object to measure
@@ -169,17 +171,19 @@ export class CoherenceMetrics {
     const measures = [
       this.measureRepresentationCompleteness(obj),
       obj.primeDecomposition ? this.measurePrimeFactorIntegrity(obj.primeDecomposition) : undefined,
-      obj.canonicalRepresentation ? this.measureObserverInvariance(obj.canonicalRepresentation, obj.observerFrame?.id) : undefined,
-      this.measureTrilateralCoherence(obj)
+      obj.canonicalRepresentation
+        ? this.measureObserverInvariance(obj.canonicalRepresentation, obj.observerFrame?.id)
+        : undefined,
+      this.measureTrilateralCoherence(obj),
     ].filter(measure => measure !== undefined) as CoherenceMeasure[];
-    
+
     // Return the measure with the highest value
-    return measures.reduce((best, current) => 
-      current.value > best.value ? current : best, 
+    return measures.reduce(
+      (best, current) => (current.value > best.value ? current : best),
       measures[0]
     );
   }
-  
+
   /**
    * Normalize a coherence value using the specified method
    * @param value Raw coherence value
@@ -191,19 +195,19 @@ export class CoherenceMetrics {
       case CoherenceNormalization.UNIT_NORMALIZED:
         // Clamp to [0,1]
         return Math.max(0, Math.min(1, value));
-        
+
       case CoherenceNormalization.LOG_NORMALIZED:
         // Log normalization for very large values
         return Math.max(0, Math.min(1, Math.log(value + 1) / Math.log(101)));
-        
+
       case CoherenceNormalization.EXPONENTIAL_NORMALIZED:
         // Exponential normalization for very small values
         return Math.max(0, Math.min(1, 1 - Math.exp(-value)));
-        
+
       case CoherenceNormalization.RELATIVE_NORMALIZED:
         // Relative to a baseline of 0.5
         return Math.max(0, Math.min(1, 0.5 + value / 2));
-        
+
       default:
         return value;
     }

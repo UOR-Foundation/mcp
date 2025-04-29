@@ -146,7 +146,11 @@ export interface UORAxiomsSchema {
     id: string;
     name: string;
     statement: string;
-    category: 'trilateral-coherence' | 'unique-factorization' | 'canonical-representation' | 'coherence-measure';
+    category:
+      | 'trilateral-coherence'
+      | 'unique-factorization'
+      | 'canonical-representation'
+      | 'coherence-measure';
     description?: string;
     implications?: string[];
     examples?: Array<{

@@ -11,7 +11,7 @@ import {
   PrimeDecomposition,
   CanonicalRepresentation,
   ObserverFrame,
-  CoherenceMeasure
+  CoherenceMeasure,
 } from './uor-core';
 
 /**
@@ -21,10 +21,10 @@ import {
 export class BaseUORObject extends UORObject {
   /** Object data content */
   protected data: any;
-  
+
   /** Domain for this object */
   protected domain: string;
-  
+
   /**
    * Creates a new Base UOR Object
    * @param id Unique identifier
@@ -37,7 +37,7 @@ export class BaseUORObject extends UORObject {
     this.data = data;
     this.domain = domain;
   }
-  
+
   /**
    * Transforms this object to a different observer frame
    * @param newFrame The new observer frame to transform to
@@ -45,28 +45,23 @@ export class BaseUORObject extends UORObject {
    */
   transformToFrame(newFrame: ObserverFrame): UORObject {
     // Create a new object with the same content but different frame
-    const transformed = new BaseUORObject(
-      this.id, 
-      this.type, 
-      this.data, 
-      this.domain
-    );
-    
+    const transformed = new BaseUORObject(this.id, this.type, this.data, this.domain);
+
     // Copy the prime decomposition and canonical representation
     if (this.primeDecomposition) {
       transformed.primeDecomposition = this.primeDecomposition;
     }
-    
+
     if (this.canonicalRepresentation) {
       transformed.canonicalRepresentation = this.canonicalRepresentation;
     }
-    
+
     // Set the new observer frame
     transformed.observerFrame = newFrame;
-    
+
     return transformed;
   }
-  
+
   /**
    * Computes the prime decomposition of this object
    * This implementation uses a generic JSON decomposition approach
@@ -75,14 +70,14 @@ export class BaseUORObject extends UORObject {
     // For generic data, we use a JSON-based decomposition
     // In a real implementation, this would use domain-specific algorithms
     const primeFactors: PrimeFactor[] = [];
-    
+
     if (typeof this.data === 'object' && this.data !== null) {
       // For objects, each key-value pair becomes a prime factor
       for (const [key, value] of Object.entries(this.data)) {
         const factor: PrimeFactor = {
           id: `${this.domain}:${typeof value}:${key}`,
           value: { key, value } as any,
-          domain: this.domain
+          domain: this.domain,
         };
         primeFactors.push(factor);
       }
@@ -91,17 +86,17 @@ export class BaseUORObject extends UORObject {
       const factor: PrimeFactor = {
         id: `${this.domain}:${typeof this.data}:value`,
         value: { value: this.data } as any,
-        domain: this.domain
+        domain: this.domain,
       };
       primeFactors.push(factor);
     }
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'json-property-decomposition'
+      decompositionMethod: 'json-property-decomposition',
     };
   }
-  
+
   /**
    * Computes the canonical representation of this object
    * Creates a normalized, sorted representation
@@ -110,7 +105,7 @@ export class BaseUORObject extends UORObject {
     // For generic data, we create a normalized JSON representation
     // The normalization ensures consistent ordering and formatting
     let normalizedValue: any;
-    
+
     if (typeof this.data === 'object' && this.data !== null) {
       // For objects, we sort keys and normalize nested objects
       normalizedValue = this.normalizeObject(this.data);
@@ -118,14 +113,14 @@ export class BaseUORObject extends UORObject {
       // For primitives, we use the value directly
       normalizedValue = this.data;
     }
-    
+
     return {
       representationType: 'json-normalized',
       value: { data: normalizedValue } as any,
-      coherenceNorm: 1.0 // Default norm for simple objects
+      coherenceNorm: 1.0, // Default norm for simple objects
     };
   }
-  
+
   /**
    * Normalizes an object for canonical representation
    * @param obj The object to normalize
@@ -136,23 +131,23 @@ export class BaseUORObject extends UORObject {
       // For arrays, normalize each element
       return obj.map(item => this.normalizeObject(item));
     }
-    
+
     if (typeof obj === 'object' && obj !== null) {
       // For objects, sort keys and normalize values
       const normalized: any = {};
       const sortedKeys = Object.keys(obj).sort();
-      
+
       for (const key of sortedKeys) {
         normalized[key] = this.normalizeObject(obj[key]);
       }
-      
+
       return normalized;
     }
-    
+
     // For primitives, return as is
     return obj;
   }
-  
+
   /**
    * Measures the coherence of this object's representation
    * Quantifies how well the representation maintains the object's structure
@@ -160,11 +155,11 @@ export class BaseUORObject extends UORObject {
   measureCoherence(): CoherenceMeasure {
     // Import coherence metrics - done inline to avoid circular dependency
     const { CoherenceMetrics } = require('./uor-coherence');
-    
+
     // Use the optimal coherence measure from our enhanced metrics
     return CoherenceMetrics.measureOptimalCoherence(this);
   }
-  
+
   /**
    * Serializes this object to a JSON representation
    * Ensures the canonical form is preserved
@@ -174,30 +169,26 @@ export class BaseUORObject extends UORObject {
     if (!this.canonicalRepresentation) {
       this.canonicalRepresentation = this.computeCanonicalRepresentation();
     }
-    
+
     // Serialize the object with its UOR metadata
     return {
       id: this.id,
       type: this.type,
       canonicalRepresentation: this.canonicalRepresentation,
       observerFrame: this.observerFrame,
-      primeDecomposition: this.primeDecomposition
+      primeDecomposition: this.primeDecomposition,
     };
   }
-  
+
   /**
    * Validates this object against its schema
    * @returns Whether the object is valid
    */
   validate(): boolean {
     // Simple validation checking required properties
-    return (
-      typeof this.id === 'string' &&
-      typeof this.type === 'string' &&
-      this.data !== undefined
-    );
+    return typeof this.id === 'string' && typeof this.type === 'string' && this.data !== undefined;
   }
-  
+
   /**
    * Gets the intrinsic prime factors for this object's domain
    * @returns Array of prime factors that are intrinsic to this domain
@@ -220,19 +211,19 @@ export class SimpleUORSchema extends UORSchema {
   transformToFrame(newFrame: ObserverFrame): UORObject {
     // Create a new schema with the same content but different frame
     const transformed = new SimpleUORSchema(this.id, this.schema);
-    
+
     // Copy the prime decomposition and canonical representation
     if (this.primeDecomposition) {
       transformed.primeDecomposition = this.primeDecomposition;
     }
-    
+
     if (this.canonicalRepresentation) {
       transformed.canonicalRepresentation = this.canonicalRepresentation;
     }
-    
+
     // Set the new observer frame
     transformed.observerFrame = newFrame;
-    
+
     return transformed;
   }
 
@@ -242,20 +233,20 @@ export class SimpleUORSchema extends UORSchema {
   computePrimeDecomposition(): PrimeDecomposition {
     // Convert schema to key-value pairs as prime factors
     const primeFactors: PrimeFactor[] = [];
-    
+
     const addSchemaProperties = (obj: any, path: string = '') => {
       if (typeof obj !== 'object' || obj === null) return;
-      
+
       for (const [key, value] of Object.entries(obj)) {
         const currentPath = path ? `${path}.${key}` : key;
-        
+
         if (key === 'properties' && typeof value === 'object') {
           // Handle schema properties specially
           for (const [propName, propDef] of Object.entries(value as Record<string, unknown>)) {
             const factor: PrimeFactor = {
               id: `schema:property:${propName}`,
               value: { property: propName, definition: propDef } as any,
-              domain: 'schema'
+              domain: 'schema',
             };
             primeFactors.push(factor);
           }
@@ -264,7 +255,7 @@ export class SimpleUORSchema extends UORSchema {
           const factor: PrimeFactor = {
             id: `schema:required`,
             value: { required: value } as any,
-            domain: 'schema'
+            domain: 'schema',
           };
           primeFactors.push(factor);
         } else if (typeof value === 'object' && value !== null) {
@@ -275,21 +266,21 @@ export class SimpleUORSchema extends UORSchema {
           const factor: PrimeFactor = {
             id: `schema:${currentPath}`,
             value: { [key]: value } as any,
-            domain: 'schema'
+            domain: 'schema',
           };
           primeFactors.push(factor);
         }
       }
     };
-    
+
     addSchemaProperties(this.schema);
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'schema-property-decomposition'
+      decompositionMethod: 'schema-property-decomposition',
     };
   }
-  
+
   /**
    * Computes the canonical representation of this schema
    */
@@ -299,30 +290,30 @@ export class SimpleUORSchema extends UORSchema {
       if (Array.isArray(obj)) {
         return obj.map(item => normalizeSchema(item)).sort();
       }
-      
+
       if (typeof obj === 'object' && obj !== null) {
         const normalized: any = {};
         const sortedKeys = Object.keys(obj).sort();
-        
+
         for (const key of sortedKeys) {
           normalized[key] = normalizeSchema(obj[key]);
         }
-        
+
         return normalized;
       }
-      
+
       return obj;
     };
-    
+
     const normalizedSchema = normalizeSchema(this.schema);
-    
+
     return {
       representationType: 'json-schema-normalized',
       value: normalizedSchema as any,
-      coherenceNorm: 1.0
+      coherenceNorm: 1.0,
     };
   }
-  
+
   /**
    * Measures the coherence of this schema
    */
@@ -331,10 +322,10 @@ export class SimpleUORSchema extends UORSchema {
     return {
       type: 'schema-validity',
       value: 1.0,
-      normalization: 'unit-normalized'
+      normalization: 'unit-normalized',
     };
   }
-  
+
   /**
    * Serializes this schema
    */
@@ -343,10 +334,11 @@ export class SimpleUORSchema extends UORSchema {
       id: this.id,
       type: this.type,
       schema: this.schema,
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation()
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
     };
   }
-  
+
   /**
    * Validates this schema
    */
@@ -359,7 +351,7 @@ export class SimpleUORSchema extends UORSchema {
       this.type === 'UORSchema'
     );
   }
-  
+
   /**
    * Validates data against this schema
    * @param data The data to validate
@@ -370,7 +362,7 @@ export class SimpleUORSchema extends UORSchema {
     if (typeof data !== 'object' || data === null) {
       return false;
     }
-    
+
     // Check required properties if defined in schema
     const requiredProps = (this.schema as any).required;
     if (Array.isArray(requiredProps)) {
@@ -380,10 +372,10 @@ export class SimpleUORSchema extends UORSchema {
         }
       }
     }
-    
+
     return true;
   }
-  
+
   /**
    * Gets intrinsic prime factors for schemas
    */
@@ -393,18 +385,18 @@ export class SimpleUORSchema extends UORSchema {
       {
         id: 'schema:intrinsic:type',
         value: { key: 'type', description: 'JSON Schema type property' } as any,
-        domain: 'schema'
+        domain: 'schema',
       },
       {
         id: 'schema:intrinsic:properties',
         value: { key: 'properties', description: 'JSON Schema properties container' } as any,
-        domain: 'schema'
+        domain: 'schema',
       },
       {
         id: 'schema:intrinsic:required',
         value: { key: 'required', description: 'JSON Schema required properties array' } as any,
-        domain: 'schema'
-      }
+        domain: 'schema',
+      },
     ];
   }
 }
@@ -421,22 +413,22 @@ export class TextArtifact extends UORArtifact {
   transformToFrame(newFrame: ObserverFrame): UORObject {
     // Create a new artifact with the same content but different frame
     const transformed = new TextArtifact(this.id, this.mimeType, this.size);
-    
+
     // Copy chunks
     transformed.chunks = [...this.chunks];
-    
+
     // Copy the prime decomposition and canonical representation
     if (this.primeDecomposition) {
       transformed.primeDecomposition = this.primeDecomposition;
     }
-    
+
     if (this.canonicalRepresentation) {
       transformed.canonicalRepresentation = this.canonicalRepresentation;
     }
-    
+
     // Set the new observer frame
     transformed.observerFrame = newFrame;
-    
+
     return transformed;
   }
 
@@ -447,9 +439,9 @@ export class TextArtifact extends UORArtifact {
     // For text, we decompose into lines or paragraphs
     const chunks = this.assembleContent() as string;
     const lines = chunks.split('\n');
-    
+
     const primeFactors: PrimeFactor[] = [];
-    
+
     // Each line becomes a prime factor
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -457,17 +449,17 @@ export class TextArtifact extends UORArtifact {
         primeFactors.push({
           id: `text:line:${i}`,
           value: { lineNumber: i, content: line } as any,
-          domain: 'text'
+          domain: 'text',
         });
       }
     }
-    
+
     return {
       primeFactors,
-      decompositionMethod: 'text-line-decomposition'
+      decompositionMethod: 'text-line-decomposition',
     };
   }
-  
+
   /**
    * Computes canonical representation of a text artifact
    */
@@ -479,14 +471,14 @@ export class TextArtifact extends UORArtifact {
       .replace(/\r/g, '\n')
       .replace(/\s+/g, ' ')
       .trim();
-    
+
     return {
       representationType: 'text-normalized',
       value: { content: normalized } as any,
-      coherenceNorm: 1.0
+      coherenceNorm: 1.0,
     };
   }
-  
+
   /**
    * Measures coherence of a text artifact
    */
@@ -495,10 +487,10 @@ export class TextArtifact extends UORArtifact {
     return {
       type: 'content-integrity',
       value: 1.0,
-      normalization: 'unit-normalized'
+      normalization: 'unit-normalized',
     };
   }
-  
+
   /**
    * Serializes a text artifact
    */
@@ -509,10 +501,11 @@ export class TextArtifact extends UORArtifact {
       mimeType: this.mimeType,
       size: this.size,
       chunks: this.chunks,
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation()
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
     };
   }
-  
+
   /**
    * Validates a text artifact
    */
@@ -524,7 +517,7 @@ export class TextArtifact extends UORArtifact {
       Array.isArray(this.chunks)
     );
   }
-  
+
   /**
    * Gets intrinsic primes for text domain
    */
@@ -533,21 +526,21 @@ export class TextArtifact extends UORArtifact {
       {
         id: 'text:intrinsic:paragraph',
         value: { unit: 'paragraph', description: 'A paragraph of text' } as any,
-        domain: 'text'
+        domain: 'text',
       },
       {
         id: 'text:intrinsic:line',
         value: { unit: 'line', description: 'A line of text' } as any,
-        domain: 'text'
+        domain: 'text',
       },
       {
         id: 'text:intrinsic:sentence',
         value: { unit: 'sentence', description: 'A sentence of text' } as any,
-        domain: 'text'
-      }
+        domain: 'text',
+      },
     ];
   }
-  
+
   /**
    * Assembles text content from chunks
    */
@@ -563,7 +556,7 @@ export class TextArtifact extends UORArtifact {
 export class GitHubNamespaceResolver extends UORResolver {
   /** The source namespace for this resolver */
   private sourceNamespace: string;
-  
+
   /**
    * Creates a GitHub namespace resolver
    * @param id Resolver identifier
@@ -574,7 +567,7 @@ export class GitHubNamespaceResolver extends UORResolver {
     super(id, targetNamespace, 'github');
     this.sourceNamespace = sourceNamespace;
   }
-  
+
   /**
    * Transforms this resolver to a different observer frame
    * @param newFrame The new observer frame to transform to
@@ -583,26 +576,26 @@ export class GitHubNamespaceResolver extends UORResolver {
   transformToFrame(newFrame: ObserverFrame): UORObject {
     // Create a new resolver with the same content but different frame
     const transformed = new GitHubNamespaceResolver(
-      this.id, 
-      this.sourceNamespace, 
+      this.id,
+      this.sourceNamespace,
       this.targetNamespace
     );
-    
+
     // Copy the prime decomposition and canonical representation
     if (this.primeDecomposition) {
       transformed.primeDecomposition = this.primeDecomposition;
     }
-    
+
     if (this.canonicalRepresentation) {
       transformed.canonicalRepresentation = this.canonicalRepresentation;
     }
-    
+
     // Set the new observer frame
     transformed.observerFrame = newFrame;
-    
+
     return transformed;
   }
-  
+
   /**
    * Resolves a reference from source to target namespace
    * @param reference The UOR reference to resolve
@@ -613,19 +606,19 @@ export class GitHubNamespaceResolver extends UORResolver {
     try {
       const url = new URL(reference);
       const [, type, id] = url.pathname.split('/');
-      
+
       // If already in target namespace, return as is
       if (url.hostname === this.targetNamespace) {
         return reference;
       }
-      
+
       // Create new reference in target namespace
       return `uor://${this.targetNamespace}/${type}/${id}`;
     } catch (error) {
       throw new Error(`Invalid UOR reference: ${String(error)}`);
     }
   }
-  
+
   /**
    * Computes the prime decomposition of this resolver
    */
@@ -635,23 +628,23 @@ export class GitHubNamespaceResolver extends UORResolver {
         {
           id: `resolver:source:${this.sourceNamespace}`,
           value: { namespace: this.sourceNamespace } as any,
-          domain: 'resolver'
+          domain: 'resolver',
         },
         {
           id: `resolver:target:${this.targetNamespace}`,
           value: { namespace: this.targetNamespace } as any,
-          domain: 'resolver'
+          domain: 'resolver',
         },
         {
           id: `resolver:method:${this.resolutionMethod}`,
           value: { method: this.resolutionMethod } as any,
-          domain: 'resolver'
-        }
+          domain: 'resolver',
+        },
       ],
-      decompositionMethod: 'resolver-component-decomposition'
+      decompositionMethod: 'resolver-component-decomposition',
     };
   }
-  
+
   /**
    * Computes the canonical representation of this resolver
    */
@@ -661,12 +654,12 @@ export class GitHubNamespaceResolver extends UORResolver {
       value: {
         source: this.sourceNamespace,
         target: this.targetNamespace,
-        method: this.resolutionMethod
+        method: this.resolutionMethod,
       } as any,
-      coherenceNorm: 1.0
+      coherenceNorm: 1.0,
     };
   }
-  
+
   /**
    * Measures coherence of this resolver
    */
@@ -674,10 +667,10 @@ export class GitHubNamespaceResolver extends UORResolver {
     return {
       type: 'resolver-integrity',
       value: 1.0,
-      normalization: 'unit-normalized'
+      normalization: 'unit-normalized',
     };
   }
-  
+
   /**
    * Serializes this resolver
    */
@@ -688,10 +681,11 @@ export class GitHubNamespaceResolver extends UORResolver {
       sourceNamespace: this.sourceNamespace,
       targetNamespace: this.targetNamespace,
       resolutionMethod: this.resolutionMethod,
-      canonicalRepresentation: this.canonicalRepresentation || this.computeCanonicalRepresentation()
+      canonicalRepresentation:
+        this.canonicalRepresentation || this.computeCanonicalRepresentation(),
     };
   }
-  
+
   /**
    * Validates this resolver
    */
@@ -704,7 +698,7 @@ export class GitHubNamespaceResolver extends UORResolver {
       typeof this.resolutionMethod === 'string'
     );
   }
-  
+
   /**
    * Gets intrinsic primes for resolver domain
    */
@@ -713,18 +707,18 @@ export class GitHubNamespaceResolver extends UORResolver {
       {
         id: 'resolver:intrinsic:source',
         value: { component: 'source', description: 'Source namespace' } as any,
-        domain: 'resolver'
+        domain: 'resolver',
       },
       {
         id: 'resolver:intrinsic:target',
         value: { component: 'target', description: 'Target namespace' } as any,
-        domain: 'resolver'
+        domain: 'resolver',
       },
       {
         id: 'resolver:intrinsic:method',
         value: { component: 'method', description: 'Resolution method' } as any,
-        domain: 'resolver'
-      }
+        domain: 'resolver',
+      },
     ];
   }
 }

@@ -12,7 +12,7 @@ export enum EventPriority {
   LOW = 'low',
   NORMAL = 'normal',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -22,7 +22,7 @@ export enum EventDeliveryStatus {
   PENDING = 'pending',
   DELIVERED = 'delivered',
   FAILED = 'failed',
-  RETRYING = 'retrying'
+  RETRYING = 'retrying',
 }
 
 /**
@@ -31,7 +31,7 @@ export enum EventDeliveryStatus {
 export enum ChannelVisibility {
   PUBLIC = 'public',
   PRIVATE = 'private',
-  PROTECTED = 'protected'
+  PROTECTED = 'protected',
 }
 
 /**
@@ -127,7 +127,9 @@ export interface SubscriptionUORObject extends UORObject {
   getSubscriptionData(): ChannelSubscription;
   updateSubscription(subscription: Partial<ChannelSubscription>): void;
   updateCriteria(criteria: Partial<Record<string, any>>): void;
-  updateNotificationPreferences(preferences: Partial<ChannelSubscription['notificationPreferences']>): void;
+  updateNotificationPreferences(
+    preferences: Partial<ChannelSubscription['notificationPreferences']>
+  ): void;
   setActive(active: boolean): void;
 }
 

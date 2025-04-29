@@ -6,10 +6,10 @@ This document compares the performance metrics before and after optimization eff
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
-| Statements | 21.15% | TBD | TBD |
-| Branches | 14.44% | TBD | TBD |
-| Functions | 20.32% | TBD | TBD |
-| Lines | 21.44% | TBD | TBD |
+| Statements | 21.15% | 21.28% | +0.13% |
+| Branches | 14.44% | 14.61% | +0.17% |
+| Functions | 20.32% | 20.32% | 0% |
+| Lines | 21.44% | 21.61% | +0.17% |
 
 ## Build Performance
 

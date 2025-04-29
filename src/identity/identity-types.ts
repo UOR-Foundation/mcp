@@ -11,7 +11,7 @@ import { UORObject } from '../core/uor-core';
 export enum IdentityVerificationStatus {
   UNVERIFIED = 'unverified',
   PENDING = 'pending',
-  VERIFIED = 'verified'
+  VERIFIED = 'verified',
 }
 
 /**
@@ -26,8 +26,8 @@ export enum IdentityProviderType {
  */
 export interface IdentityProvider {
   type: IdentityProviderType;
-  id: string;        // Provider-specific ID (e.g., GitHub user ID)
-  username: string;  // Provider-specific username
+  id: string; // Provider-specific ID (e.g., GitHub user ID)
+  username: string; // Provider-specific username
   verified: boolean; // Whether the identity has been verified with this provider
   verifiedAt?: Date; // When the identity was verified
 }
@@ -57,22 +57,22 @@ export interface CustomProfileField {
  * Complete identity data structure
  */
 export interface IdentityData {
-  id: string;                                // Unique identity ID
-  providers: IdentityProvider[];             // Identity providers (GitHub, etc.)
-  profile: ProfileInfo;                      // Basic profile information
-  customFields: CustomProfileField[];        // Custom profile fields
+  id: string; // Unique identity ID
+  providers: IdentityProvider[]; // Identity providers (GitHub, etc.)
+  profile: ProfileInfo; // Basic profile information
+  customFields: CustomProfileField[]; // Custom profile fields
   verificationStatus: IdentityVerificationStatus;
-  createdAt: Date;                           // When the identity was created
-  updatedAt: Date;                           // When the identity was last updated
+  createdAt: Date; // When the identity was created
+  updatedAt: Date; // When the identity was last updated
 }
 
 /**
  * Public identity view (for other users)
  */
 export interface PublicIdentityView {
-  id: string;                                // Unique identity ID
+  id: string; // Unique identity ID
   providers: Pick<IdentityProvider, 'type' | 'username' | 'verified'>[]; // Limited provider info
-  profile: Omit<ProfileInfo, 'email'>;       // Public profile info (no email)
+  profile: Omit<ProfileInfo, 'email'>; // Public profile info (no email)
   verificationStatus: IdentityVerificationStatus;
 }
 

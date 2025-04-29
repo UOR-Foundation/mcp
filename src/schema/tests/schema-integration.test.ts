@@ -9,6 +9,21 @@ import { UORCoreSchema, ObserverFrameSchema } from '../schema-types';
 
 jest.mock('../schema-validator');
 
+const mockValidateObserverFrame = jest.fn().mockReturnValue({ valid: true });
+const mockAssertValid = jest.fn().mockReturnValue(true);
+const mockInitialize = jest.fn().mockResolvedValue(undefined);
+const mockFormatErrors = jest.fn().mockReturnValue(['Test error']);
+const mockIsInitialized = jest.fn().mockReturnValue(true);
+
+const mockSchemaValidatorInstance = {
+  initialize: mockInitialize,
+  validateUORObject: jest.fn().mockReturnValue({ valid: true }),
+  validateObserverFrame: mockValidateObserverFrame,
+  assertValid: mockAssertValid,
+  formatErrors: mockFormatErrors,
+  isInitialized: mockIsInitialized
+};
+
 describe('SchemaIntegration', () => {
   const validUORObject: Partial<UORCoreSchema> = {
     id: 'test-id',
@@ -32,15 +47,13 @@ describe('SchemaIntegration', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     
-    const mockSchemaValidator = {
-      initialize: jest.fn().mockResolvedValue(undefined),
-      validateUORObject: jest.fn().mockReturnValue({ valid: true }),
-      validateObserverFrame: jest.fn().mockReturnValue({ valid: true }),
-      assertValid: jest.fn().mockReturnValue(true),
-      formatErrors: jest.fn().mockReturnValue(['Test error'])
-    };
+    (SchemaValidator.getInstance as jest.Mock).mockReturnValue(mockSchemaValidatorInstance);
     
-    (SchemaValidator.getInstance as jest.Mock).mockReturnValue(mockSchemaValidator);
+    mockInitialize.mockClear().mockResolvedValue(undefined);
+    mockValidateObserverFrame.mockClear().mockReturnValue({ valid: true });
+    mockAssertValid.mockClear().mockReturnValue(true);
+    mockFormatErrors.mockClear().mockReturnValue(['Test error']);
+    mockIsInitialized.mockClear().mockReturnValue(true);
   });
 
   describe('getInstance', () => {
@@ -61,20 +74,29 @@ describe('SchemaIntegration', () => {
     });
 
     it('should handle initialization errors', async () => {
-      const mockSchemaValidator = SchemaValidator.getInstance();
-      (mockSchemaValidator.initialize as jest.Mock).mockRejectedValue(new Error('Test error'));
+      mockInitialize.mockRejectedValueOnce(new Error('Test error'));
       
       const schemaIntegration = SchemaIntegration.getInstance();
+      
+      (schemaIntegration as any).initialized = false;
       
       await expect(schemaIntegration.initialize()).rejects.toThrow('Test error');
     });
 
     it('should not initialize twice', async () => {
+      mockInitialize.mockClear();
+      
       const schemaIntegration = SchemaIntegration.getInstance();
-      await schemaIntegration.initialize();
+      
+      (schemaIntegration as any).initialized = false;
+      
       await schemaIntegration.initialize();
       
-      expect(SchemaValidator.getInstance().initialize).toHaveBeenCalledTimes(1);
+      expect(mockInitialize).toHaveBeenCalledTimes(1);
+      
+      await schemaIntegration.initialize();
+      
+      expect(mockInitialize).toHaveBeenCalledTimes(1);
     });
   });
 
