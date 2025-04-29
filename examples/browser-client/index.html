@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UOR-MCP Browser Client Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 800px;
+            margin-top: 2rem;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UOR-MCP Browser Client Example</h1>
+        <p class="lead">This example demonstrates how to use the UOR-MCP API in a web browser.</p>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="configForm">
+                    <div class="mb-3">
+                        <label for="githubClientId" class="form-label">GitHub Client ID</label>
+                        <input type="text" class="form-control" id="githubClientId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tokenExchangeProxy" class="form-label">Token Exchange Proxy URL</label>
+                        <input type="text" class="form-control" id="tokenExchangeProxy" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mcpEndpoint" class="form-label">MCP Endpoint</label>
+                        <input type="text" class="form-control" id="mcpEndpoint" value="https://68113dd199a34737508b5211--uor-mcp.netlify.app/mcp" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="authCard" class="card mb-4 hidden">
+            <div class="card-header">
+                <h5 class="mb-0">Authentication</h5>
+            </div>
+            <div class="card-body">
+                <p>Authenticate with GitHub to access your UOR data.</p>
+                <button id="authButton" class="btn btn-success">Authenticate with GitHub</button>
+                <div id="authStatus" class="alert alert-info mt-3 hidden"></div>
+            </div>
+        </div>
+
+        <div id="operationsCard" class="card mb-4 hidden">
+            <div class="card-header">
+                <h5 class="mb-0">UOR Operations</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Initialize MCP Connection</h6>
+                    <button id="initializeButton" class="btn btn-primary">Initialize</button>
+                    <pre id="initializeResult" class="mt-2 hidden"></pre>
+                </div>
+
+                <div class="mb-4">
+                    <h6>List Available Tools</h6>
+                    <button id="listToolsButton" class="btn btn-primary">List Tools</button>
+                    <pre id="listToolsResult" class="mt-2 hidden"></pre>
+                </div>
+
+                <div class="mb-4">
+                    <h6>Create UOR Object</h6>
+                    <form id="createUORForm">
+                        <div class="mb-3">
+                            <label for="uorType" class="form-label">Type</label>
+                            <select class="form-control" id="uorType" required>
+                                <option value="concept">Concept</option>
+                                <option value="topic">Topic</option>
+                                <option value="predicate">Predicate</option>
+                                <option value="resource">Resource</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="uorData" class="form-label">Data (JSON)</label>
+                            <textarea class="form-control" id="uorData" rows="5" required>{
+  "name": "Example Object",
+  "description": "This is an example object created with the browser client"
+}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Object</button>
+                    </form>
+                    <pre id="createUORResult" class="mt-2 hidden"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div id="logCard" class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Log</h5>
+            </div>
+            <div class="card-body">
+                <pre id="log"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let config = {
+            githubClientId: '',
+            tokenExchangeProxy: '',
+            mcpEndpoint: 'https://68113dd199a34737508b5211--uor-mcp.netlify.app/mcp',
+            redirectUri: window.location.origin + window.location.pathname
+        };
+
+        // Authentication
+        let accessToken = null;
+
+        // DOM Elements
+        const configForm = document.getElementById('configForm');
+        const authCard = document.getElementById('authCard');
+        const authButton = document.getElementById('authButton');
+        const authStatus = document.getElementById('authStatus');
+        const operationsCard = document.getElementById('operationsCard');
+        const initializeButton = document.getElementById('initializeButton');
+        const initializeResult = document.getElementById('initializeResult');
+        const listToolsButton = document.getElementById('listToolsButton');
+        const listToolsResult = document.getElementById('listToolsResult');
+        const createUORForm = document.getElementById('createUORForm');
+        const createUORResult = document.getElementById('createUORResult');
+        const logElement = document.getElementById('log');
+
+        // Load configuration from localStorage
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('uor-mcp-config');
+            if (savedConfig) {
+                config = JSON.parse(savedConfig);
+                document.getElementById('githubClientId').value = config.githubClientId;
+                document.getElementById('tokenExchangeProxy').value = config.tokenExchangeProxy;
+                document.getElementById('mcpEndpoint').value = config.mcpEndpoint;
+                authCard.classList.remove('hidden');
+            }
+        }
+
+        // Save configuration to localStorage
+        configForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            config.githubClientId = document.getElementById('githubClientId').value;
+            config.tokenExchangeProxy = document.getElementById('tokenExchangeProxy').value;
+            config.mcpEndpoint = document.getElementById('mcpEndpoint').value;
+            localStorage.setItem('uor-mcp-config', JSON.stringify(config));
+            log('Configuration saved');
+            authCard.classList.remove('hidden');
+        });
+
+        // Start authentication flow
+        authButton.addEventListener('click', function() {
+            startAuthFlow();
+        });
+
+        // Initialize MCP connection
+        initializeButton.addEventListener('click', function() {
+            initializeMCP();
+        });
+
+        // List available tools
+        listToolsButton.addEventListener('click', function() {
+            listTools();
+        });
+
+        // Create UOR object
+        createUORForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const type = document.getElementById('uorType').value;
+            const dataStr = document.getElementById('uorData').value;
+            try {
+                const data = JSON.parse(dataStr);
+                createUORObject(type, data);
+            } catch (error) {
+                log('Error parsing JSON data: ' + error.message);
+            }
+        });
+
+        // Check for authentication callback
+        function checkAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            
+            if (code && state) {
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Verify state
+                const savedState = localStorage.getItem('uor-mcp-auth-state');
+                if (state !== savedState) {
+                    log('Invalid state parameter');
+                    return;
+                }
+                
+                // Exchange code for access token
+                exchangeCodeForToken(code);
+            }
+        }
+
+        // Start authentication flow
+        function startAuthFlow() {
+            log('Starting GitHub OAuth flow...');
+            
+            // Generate random state for security
+            const state = Math.random().toString(36).substring(2);
+            localStorage.setItem('uor-mcp-auth-state', state);
+            
+            // Open GitHub authorization URL
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${config.githubClientId}&redirect_uri=${encodeURIComponent(config.redirectUri)}&state=${state}&scope=repo`;
+            window.location.href = authUrl;
+        }
+
+        // Exchange code for access token
+        function exchangeCodeForToken(code) {
+            log('Exchanging code for access token...');
+            
+            fetch(config.tokenExchangeProxy, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    code,
+                    client_id: config.githubClientId,
+                    redirect_uri: config.redirectUri,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                accessToken = data.access_token;
+                if (accessToken) {
+                    log('Authentication successful!');
+                    authStatus.textContent = 'Authenticated successfully!';
+                    authStatus.classList.remove('alert-info', 'hidden');
+                    authStatus.classList.add('alert-success');
+                    operationsCard.classList.remove('hidden');
+                } else {
+                    log('Failed to obtain access token');
+                    authStatus.textContent = 'Authentication failed!';
+                    authStatus.classList.remove('alert-info', 'hidden');
+                    authStatus.classList.add('alert-danger');
+                }
+            })
+            .catch(error => {
+                log('Error exchanging code for token: ' + error.message);
+                authStatus.textContent = 'Authentication failed: ' + error.message;
+                authStatus.classList.remove('alert-info', 'hidden');
+                authStatus.classList.add('alert-danger');
+            });
+        }
+
+        // Initialize MCP connection
+        function initializeMCP() {
+            log('Initializing MCP connection...');
+            
+            const request = {
+                jsonrpc: '2.0',
+                method: 'initialize',
+                params: {},
+                id: 1
+            };
+            
+            sendMCPRequest(request)
+                .then(data => {
+                    log('MCP initialized with capabilities');
+                    initializeResult.textContent = JSON.stringify(data.result.capabilities, null, 2);
+                    initializeResult.classList.remove('hidden');
+                })
+                .catch(error => {
+                    log('Error initializing MCP: ' + error.message);
+                });
+        }
+
+        // List available tools
+        function listTools() {
+            log('Listing available tools...');
+            
+            const request = {
+                jsonrpc: '2.0',
+                method: 'tools/list',
+                params: {},
+                id: 2
+            };
+            
+            sendMCPRequest(request)
+                .then(data => {
+                    log('Available tools received');
+                    listToolsResult.textContent = JSON.stringify(data.result.tools, null, 2);
+                    listToolsResult.classList.remove('hidden');
+                })
+                .catch(error => {
+                    log('Error listing tools: ' + error.message);
+                });
+        }
+
+        // Create a UOR object
+        function createUORObject(type, data) {
+            log(`Creating UOR object of type '${type}'...`);
+            
+            const request = {
+                jsonrpc: '2.0',
+                method: 'tools/call',
+                params: {
+                    tool: 'createUOR',
+                    parameters: {
+                        type,
+                        data
+                    }
+                },
+                id: 3
+            };
+            
+            sendMCPRequest(request)
+                .then(data => {
+                    log('Created UOR object');
+                    createUORResult.textContent = JSON.stringify(data.result, null, 2);
+                    createUORResult.classList.remove('hidden');
+                })
+                .catch(error => {
+                    log('Error creating UOR object: ' + error.message);
+                });
+        }
+
+        // Send MCP request
+        function sendMCPRequest(request) {
+            return fetch(config.mcpEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify(request)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+                return data;
+            });
+        }
+
+        // Log message
+        function log(message) {
+            const timestamp = new Date().toISOString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Initialize
+        loadConfig();
+        checkAuthCallback();
+    </script>
+</body>
+</html>
