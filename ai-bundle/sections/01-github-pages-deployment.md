@@ -27,6 +27,6 @@ This feature integrates with GitHub Pages for deployment and serves as the hosti
 ```javascript
 // Access the MCP server via GitHub Pages
 const mcpClient = new MCPClient({
-  endpoint: 'https://UOR-Foundation.github.io/mcp/mcp'
+  endpoint: 'https://68113dd199a34737508b5211--uor-mcp.netlify.app/mcp'
 });
 ```

@@ -16,7 +16,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://UOR-Foundation.github.io/mcp
+  - url: https://68113dd199a34737508b5211--uor-mcp.netlify.app
     description: GitHub Pages deployment
   - url: http://localhost:8080
     description: Local development server

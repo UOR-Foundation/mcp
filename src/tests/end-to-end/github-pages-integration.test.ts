@@ -9,7 +9,7 @@ import { SchemaLoader } from '../../schema/schema-loader';
 
 const skipTests = process.env.SKIP_E2E_TESTS === 'true';
 
-const baseUrl = process.env.GITHUB_PAGES_URL || 'https://uor-foundation.github.io/mcp';
+const baseUrl = process.env.GITHUB_PAGES_URL || 'https://68113dd199a34737508b5211--uor-mcp.netlify.app';
 
 describe('GitHub Pages Integration', () => {
   let server: MCPServer;
