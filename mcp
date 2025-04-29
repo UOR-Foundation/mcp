@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Endpoint</title>
+  <script src="config.js"></script>
+  <script src="mcp-client.js"></script>
+  <script src="mcp-handler.js"></script>
+</head>
+<body>
+  <div id="response"></div>
+  
+  <script>
+    // Handle MCP requests sent to this endpoint
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Get request body from URL or POST body
+        let requestBody;
+        
+        if (window.location.search) {
+          // Handle GET requests with payload in URL parameter
+          const params = new URLSearchParams(window.location.search);
+          const payload = params.get('payload');
+          if (payload) {
+            requestBody = JSON.parse(decodeURIComponent(payload));
+          }
+        } else {
+          // Handle POST requests with JSON body
+          // For client-side only, we simulate this using localStorage
+          const pendingRequest = localStorage.getItem('mcp-pending-request');
+          if (pendingRequest) {
+            requestBody = JSON.parse(pendingRequest);
+            localStorage.removeItem('mcp-pending-request');
+          }
+        }
+        
+        if (!requestBody) {
+          showResponse({
+            jsonrpc: '2.0',
+            error: {
+              code: -32600,
+              message: 'Invalid Request',
+              data: 'No request payload found'
+            }
+          });
+          return;
+        }
+        
+        // Process the request with the MCP handler
+        const response = await window.mcpHandler.handleRequest(requestBody);
+        
+        // Show response
+        showResponse(response);
+        
+        // Store response for client-side fetch
+        localStorage.setItem('mcp-last-response', JSON.stringify(response));
+      } catch (error) {
+        console.error('Error processing MCP request:', error);
+        
+        showResponse({
+          jsonrpc: '2.0',
+          error: {
+            code: -32603,
+            message: 'Internal error',
+            data: error.message
+          }
+        });
+      }
+    });
+    
+    // Display the response
+    function showResponse(response) {
+      const responseElement = document.getElementById('response');
+      responseElement.innerHTML = `
+        <pre>${JSON.stringify(response, null, 2)}</pre>
+      `;
+    }
+  </script>
+</body>
+</html>

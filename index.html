@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UOR MCP Server</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="mcp-client.js"></script>
+  <script src="mcp-handler.js"></script>
+  <!-- Web App Manifest for PWA support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3498db">
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <img src="./img/uor-logo.svg" alt="UOR Foundation Logo" class="logo" onerror="this.src='./img/uor-logo-placeholder.png'; this.onerror=null;">
+      <div class="brand">
+        <h1>UOR MCP Server</h1>
+        <div class="subtitle">Universal Object Reference Framework</div>
+      </div>
+    </div>
+    
+    <p class="description">
+      Access and manipulate UOR data through the Model Context Protocol.
+      Authentication with GitHub gives you access to your personal UOR space.
+    </p>
+    
+    <div class="auth-controls">
+      <button id="github-auth-button" class="button primary">
+        <span class="icon">🔒</span> Log in with GitHub
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section id="auth-section">
+      <h2>Authentication</h2>
+      <div id="auth-status" style="display: none;"></div>
+    </section>
+
+    <section>
+      <h2>MCP Endpoint</h2>
+      <p>
+        The MCP endpoint is available at:
+      </p>
+      <pre><code id="mcp-endpoint-url">/mcp</code></pre>
+    </section>
+
+    <section id="user-section" style="display: none;">
+      <h2>Your UOR Space</h2>
+      <div id="repository-status"></div>
+      
+      <div class="control-panel">
+        <div class="panel-section">
+          <h3>Repository Actions</h3>
+          <button id="init-repo-button" class="button">Initialize Repository</button>
+          <button id="refresh-status-button" class="button">Refresh Status</button>
+        </div>
+      </div>
+      
+      <div id="content-stats" class="stats-container"></div>
+      
+      <div id="uordb-section">
+        <h3>UOR Database</h3>
+        
+        <div class="tabs">
+          <button class="tab-button active" data-tab="concepts">Concepts</button>
+          <button class="tab-button" data-tab="resources">Resources</button>
+          <button class="tab-button" data-tab="topics">Topics</button>
+          <button class="tab-button" data-tab="predicates">Predicates</button>
+          <button class="tab-button" data-tab="resolvers">Resolvers</button>
+        </div>
+        
+        <div class="tab-content">
+          <div id="concepts-tab" class="tab-pane active">
+            <div class="content-header">
+              <h4>UOR Concepts</h4>
+              <button class="add-button" data-type="concept">+ New Concept</button>
+            </div>
+            <div class="content-list" id="concepts-list">
+              <p>No concepts found. Click "New Concept" to create one.</p>
+            </div>
+          </div>
+          
+          <div id="resources-tab" class="tab-pane">
+            <div class="content-header">
+              <h4>UOR Resources</h4>
+              <button class="add-button" data-type="resource">+ New Resource</button>
+            </div>
+            <div class="content-list" id="resources-list">
+              <p>No resources found. Click "New Resource" to create one.</p>
+            </div>
+          </div>
+          
+          <div id="topics-tab" class="tab-pane">
+            <div class="content-header">
+              <h4>UOR Topics</h4>
+              <button class="add-button" data-type="topic">+ New Topic</button>
+            </div>
+            <div class="content-list" id="topics-list">
+              <p>No topics found. Click "New Topic" to create one.</p>
+            </div>
+          </div>
+          
+          <div id="predicates-tab" class="tab-pane">
+            <div class="content-header">
+              <h4>UOR Predicates</h4>
+              <button class="add-button" data-type="predicate">+ New Predicate</button>
+            </div>
+            <div class="content-list" id="predicates-list">
+              <p>No predicates found. Click "New Predicate" to create one.</p>
+            </div>
+          </div>
+          
+          <div id="resolvers-tab" class="tab-pane">
+            <div class="content-header">
+              <h4>UOR Resolvers</h4>
+              <button class="add-button" data-type="resolver">+ New Resolver</button>
+            </div>
+            <div class="content-list" id="resolvers-list">
+              <p>No resolvers found. Click "New Resolver" to create one.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>API Documentation</h2>
+      <p>
+        The server provides the following endpoints:
+      </p>
+      <ul>
+        <li><code>/mcp</code> - MCP protocol endpoint</li>
+        <li><code>/auth/github</code> - GitHub authentication</li>
+        <li><code>/api/concepts</code> - UOR concepts API</li>
+        <li><code>/api/resources</code> - UOR resources API</li>
+        <li><code>/api/topics</code> - UOR topics API</li>
+        <li><code>/api/predicates</code> - UOR predicates API</li>
+        <li><code>/api/resolvers</code> - UOR namespace resolvers API</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>GitHub Integration</h2>
+      <p>
+        This server uses GitHub to store UOR data. When you authenticate, it will:
+      </p>
+      <ol>
+        <li>Create a <code>uordb</code> repository in your GitHub account if it doesn't exist</li>
+        <li>Initialize the repository with the UOR structure</li>
+        <li>Use this repository to store your UOR objects</li>
+      </ol>
+      <p>
+        You can create resolver records to access data in other users' namespaces.
+      </p>
+    </section>
+  </main>
+
+  <div id="detail-view" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="detail-title">Object Details</h3>
+      <div id="detail-content">
+        <!-- Object details will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <div id="create-form" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="create-title">Create New Object</h3>
+      <div id="create-form-content">
+        <!-- Form will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>UOR Foundation &copy; 2025</p>
+    <p id="app-version">Version: 0.1.0</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(function(error) {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
