@@ -1,0 +1,16 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "MCP - Model Context Protocol",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "categorizeByGroup": true,
+  "categoryOrder": ["Core", "MCP", "GitHub", "Schema", "Content", "Identity", "Messaging", "PubSub", "Storage", "Decomposition", "*"],
+  "sort": ["alphabetical"]
+}

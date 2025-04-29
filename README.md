@@ -1,8 +1,67 @@
 # Model Context Protocol (MCP) - UOR Implementation
 
+[![CI/CD Pipeline](https://github.com/UOR-Foundation/mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/UOR-Foundation/mcp/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%20%7C%2020-green.svg)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## Overview
 
 The Model Context Protocol (MCP) implementation for the Universal Object Reference (UOR) Framework provides a standardized way for LLMs to access and manipulate UOR data. This implementation uses GitHub for data storage and version control, enabling a decentralized approach to UOR data management.
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/UOR-Foundation/mcp.git
+cd mcp
+
+# Install dependencies
+npm ci
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+```
+
+### Development
+
+```bash
+# Start development server
+npm run dev
+
+# Start client in development mode
+npm run dev:client
+
+# Access the client at http://localhost:8080
+```
+
+### Testing
+
+```bash
+# Run tests
+npm test
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test -- src/core/tests/uor-coherence.test.ts
+```
+
+### Building
+
+```bash
+# Build for production
+npm run build
+
+# Build client for production
+npm run build:client
+```
 
 ## Architecture
 
@@ -105,17 +164,7 @@ This implementation provides access to the UOR core features:
 - Rate limiting follows GitHub API limits
 - OAuth scopes are limited to the specific repositories needed
 
-## Getting Started
-
-### Local Development
-
-1. Clone this repository: `git clone https://github.com/UOR-Foundation/mcp.git`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. Start the client in development mode: `npm run dev:client`
-5. Access the client at `http://localhost:8080`
-
-### GitHub Pages Deployment
+## GitHub Pages Deployment
 
 The easiest way to use the MCP server is through our GitHub Pages deployment:
 
@@ -157,17 +206,30 @@ To use this MCP server with LLM applications:
 
 ```
 /mcp
-├── src/
+├── src/                # Source code
 │   ├── core/           # UOR abstract classes implementation
 │   ├── github/         # GitHub API integration
 │   ├── mcp/            # MCP protocol implementation
 │   ├── resolvers/      # Namespace resolution logic
-│   └── server.ts       # Main server entry point
-├── types/              # TypeScript type definitions
-├── config/             # Configuration files
-├── test/               # Test suite
-└── public/             # Static files for GitHub Pages
+│   ├── schema/         # JSON Schema validation
+│   ├── content/        # Content management
+│   ├── identity/       # User identity and profiles
+│   ├── messaging/      # User messaging system
+│   ├── pubsub/         # Publish/subscribe system
+│   ├── decomposition/  # Prime decomposition algorithms
+│   └── storage/        # Storage providers (GitHub, IPFS)
+├── models/             # JSON Schema models
+├── public/             # Static files for GitHub Pages
+│   ├── components/     # UI components
+│   └── config.js       # Client configuration
+├── .github/            # GitHub Actions workflows
+├── tests/              # Test suite
+└── dist/               # Build output
 ```
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## Implementation Details
 
@@ -178,5 +240,10 @@ The server uses the following key technologies:
 - GitHub API for storage and authentication
 - JSON Schema for validation
 - MCP protocol for client/server communication
+- Vite for optimized builds
 
 All content is stored in its reversible, base-independent representation, ensuring information integrity regardless of how the data is accessed or viewed. This implementation maintains a clean separation between the UOR kernel (abstract class) and the MCP protocol layer, allowing for future protocol upgrades without affecting the core UOR functionality.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
