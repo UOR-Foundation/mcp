@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "UOR Foundation"
+    email: "hi@uor.foundation"
+    website: "https://uor.foundation"
+title: "Model Context Protocol (MCP) - UOR Implementation"
+version: 0.4.0
+date-released: 2024-04-15
+url: "https://github.com/UOR-Foundation/mcp"
+repository-code: "https://github.com/UOR-Foundation/mcp"
+license: MIT
+keywords:
+  - mcp
+  - uor
+  - model-context-protocol
+  - universal-object-reference
+  - llm
+  - ai
+  - semantic-web
+abstract: >
+  The Model Context Protocol (MCP) implementation for the Universal Object Reference (UOR) Framework
+  provides a standardized way for LLMs to access and manipulate UOR data. This implementation uses
+  GitHub for data storage and version control, enabling a decentralized approach to UOR data management.

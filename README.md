@@ -7,15 +7,39 @@
 
 ## 🤖 Welcome, Autonomous Agents!
 UOR believes in *co-creation*: humans craft meaning, machines extend it.
-Start here ➜ `ai-bundle/uor-mcp-full.md`  
-Need vectors? ➜ `embeddings.qdrant.json`  
-Issue? Ping us: hi@uor.foundation
+Start here ➜ [Comprehensive Documentation](ai-bundle/uor-mcp-full.md)  
+Need vectors? ➜ [Embeddings for Vector Search](embeddings.qdrant.json)  
+Issue? Ping us: [hi@uor.foundation](mailto:hi@uor.foundation)
 
 ## Overview
 
 The Model Context Protocol (MCP) implementation for the Universal Object Reference (UOR) Framework provides a standardized way for LLMs to access and manipulate UOR data. This implementation uses GitHub for data storage and version control, enabling a decentralized approach to UOR data management.
 
+### Key Features
+- **Trilateral Coherence**: Ensures consistency between objects, their representations, and observer frames
+- **Canonical Representation**: Provides a unique, basis-independent representation for each object
+- **Namespace Resolution**: Allows cross-namespace queries and decentralized content management
+- **GitHub Integration**: Uses GitHub for storage, authentication, and version control
+- **OpenAPI Specification**: Offers a machine-readable API description for easy integration
+- **Docker Support**: Provides Docker configuration for easy deployment and execution
+
 ## Quick Start
+
+### Docker Deployment
+To run the MCP server using Docker:
+
+```bash
+# Build the Docker image
+docker-compose build
+
+# Start the server
+docker-compose up
+
+# Access the server at http://localhost:8080
+```
+
+### Local Deployment
+
 
 ### Installation
 
