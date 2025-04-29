@@ -1,22 +1,23 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import parser from '@typescript-eslint/parser';
+import * as tseslintPlugin from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
 import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslintPlugin.configs.recommended,
   {
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      parser: tseslint.parser(),
+      parser: parser,
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.test.json'],
       },
     },
     plugins: {
-      '@typescript-eslint': tseslint.plugin,
+      '@typescript-eslint': tseslintPlugin,
       'jest': jestPlugin,
       'prettier': prettierPlugin,
     },
