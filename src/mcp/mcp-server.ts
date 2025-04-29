@@ -8,6 +8,9 @@ import { ResourceObject } from '../content/resource';
 import { TopicObject } from '../content/topic';
 import { PredicateObject } from '../content/predicate';
 import { MediaObject } from '../content/media';
+import { IdentityManager, IdentityObject } from '../identity/identity-manager';
+import { ProfileManager, ProfileImageArtifact } from '../identity/profile-manager';
+import { ProfileInfo, CustomProfileField, PublicIdentityView } from '../identity/identity-types';
 
 // Custom interface for stored UOR objects
 interface StoredUORObject {
@@ -22,10 +25,14 @@ export class MCPServer {
   private uordbManager: UORDBManager | null = null;
   private currentUser: { username: string, token: string } | null = null;
   private contentManager: typeof ContentManager;
+  private identityManager: IdentityManager;
+  private profileManager: ProfileManager;
 
   private constructor() {
-    // Initialize content manager
+    // Initialize managers
     this.contentManager = ContentManager;
+    this.identityManager = IdentityManager.getInstance();
+    this.profileManager = ProfileManager.getInstance();
   }
 
   public static getInstance(): MCPServer {
@@ -137,6 +144,18 @@ export class MCPServer {
         return this.removeContentTag(params.reference, params.tag);
       case 'content.addMediaContent':
         return this.addMediaContent(params.reference, params.content);
+      case 'identity.create':
+        return this.createIdentity(params.githubUser);
+      case 'identity.verify':
+        return this.verifyIdentity();
+      case 'identity.updateProfile':
+        return this.updateIdentityProfile(params.profile);
+      case 'identity.addCustomField':
+        return this.addCustomProfileField(params.field);
+      case 'identity.removeCustomField':
+        return this.removeCustomProfileField(params.key);
+      case 'identity.setProfileImage':
+        return this.setProfileImage(params.imageData, params.mimeType);
       case 'setAuthentication':
         this.setAuthentication(params.username, params.token);
         return true;
@@ -552,6 +571,211 @@ export class MCPServer {
     await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
     
     return true;
+  }
+  
+  /**
+   * Creates a new identity for the current user
+   * @param githubUser GitHub user information
+   * @returns The UOR reference to the created identity
+   */
+  private async createIdentity(githubUser: { id: string, login: string, name?: string, email?: string }): Promise<string> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      // Create identity object
+      const identity = await this.identityManager.createIdentity(githubUser);
+      
+      // Store in repository
+      await this.uordbManager.storeObject(this.currentUser.username, identity);
+      
+      return `uor://identity/${identity.id}`;
+    } catch (error) {
+      console.error('Error creating identity:', error);
+      throw new Error('Failed to create identity');
+    }
+  }
+  
+  /**
+   * Updates the current user's identity profile
+   * @param profile Updated profile information
+   * @returns Whether the operation was successful
+   */
+  private async updateIdentityProfile(profile: Partial<ProfileInfo>): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
+      
+      if (identities.length === 0) {
+        throw new Error('Identity not found');
+      }
+      
+      const identityData = identities[0];
+      
+      // Create identity object
+      const identity = new IdentityObject(identityData.id, identityData.data);
+      
+      // Update profile
+      this.profileManager.updateProfile(identity, profile);
+      
+      await this.uordbManager.storeObject(this.currentUser.username, identity);
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Adds a custom field to the current user's identity profile
+   * @param field Custom field to add
+   * @returns Whether the operation was successful
+   */
+  private async addCustomProfileField(field: CustomProfileField): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
+      
+      if (identities.length === 0) {
+        throw new Error('Identity not found');
+      }
+      
+      const identityData = identities[0];
+      
+      // Create identity object
+      const identity = new IdentityObject(identityData.id, identityData.data);
+      
+      this.profileManager.addCustomField(identity, field);
+      
+      await this.uordbManager.storeObject(this.currentUser.username, identity);
+      
+      return true;
+    } catch (error) {
+      console.error('Error adding custom field:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Removes a custom field from the current user's identity profile
+   * @param key Key of the field to remove
+   * @returns Whether the operation was successful
+   */
+  private async removeCustomProfileField(key: string): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
+      
+      if (identities.length === 0) {
+        throw new Error('Identity not found');
+      }
+      
+      const identityData = identities[0];
+      
+      // Create identity object
+      const identity = new IdentityObject(identityData.id, identityData.data);
+      
+      this.profileManager.removeCustomField(identity, key);
+      
+      await this.uordbManager.storeObject(this.currentUser.username, identity);
+      
+      return true;
+    } catch (error) {
+      console.error('Error removing custom field:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Verifies the current user's identity with GitHub
+   * @returns Whether verification was successful
+   */
+  private async verifyIdentity(): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
+      
+      if (identities.length === 0) {
+        throw new Error('Identity not found');
+      }
+      
+      const identityData = identities[0];
+      
+      // Create identity object
+      const identity = new IdentityObject(identityData.id, identityData.data);
+      
+      const verified = await this.identityManager.verifyIdentityWithGitHub(
+        identity,
+        this.currentUser.token
+      );
+      
+      if (verified) {
+        await this.uordbManager.storeObject(this.currentUser.username, identity);
+      }
+      
+      return verified;
+    } catch (error) {
+      console.error('Error verifying identity:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Sets the profile image for the current user's identity
+   * @param imageData Base64-encoded image data
+   * @param mimeType Image MIME type
+   * @returns Whether the operation was successful
+   */
+  private async setProfileImage(imageData: string, mimeType: string): Promise<boolean> {
+    if (!this.uordbManager || !this.currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    try {
+      const identities = await this.uordbManager.listObjects(this.currentUser.username, 'identity');
+      
+      if (identities.length === 0) {
+        throw new Error('Identity not found');
+      }
+      
+      const identityData = identities[0];
+      
+      // Create identity object
+      const identity = new IdentityObject(identityData.id, identityData.data);
+      
+      // Create profile image
+      const imageArtifact = this.profileManager.createProfileImage(imageData, mimeType);
+      
+      // Store image artifact
+      await this.uordbManager.storeObject(
+        this.currentUser.username,
+        imageArtifact
+      );
+      
+      // Set profile image reference
+      this.profileManager.setProfileImage(identity, imageArtifact);
+      
+      await this.uordbManager.storeObject(this.currentUser.username, identity);
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting profile image:', error);
+      return false;
+    }
   }
 }
 
