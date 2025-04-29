@@ -19,7 +19,7 @@ export function initializeDecompositionForUORObjects(): void {
 
   UORObject.prototype.computePrimeDecomposition = function (): PrimeDecomposition {
     if (
-      this.constructor.prototype.hasOwnProperty('computePrimeDecomposition') &&
+      Object.hasOwn(this.constructor.prototype, 'computePrimeDecomposition') &&
       this.constructor.prototype.computePrimeDecomposition !==
         UORObject.prototype.computePrimeDecomposition
     ) {
@@ -54,7 +54,7 @@ export function initializeDecompositionForUORObjects(): void {
       default:
         try {
           return decompositionManager.decompose(this.serialize());
-        } catch (error) {
+        } catch (_error) {
           console.warn(`Could not determine domain for object type: ${this.type}`);
 
           return {
@@ -66,8 +66,8 @@ export function initializeDecompositionForUORObjects(): void {
 
     try {
       return decompositionManager.decompose(this.serialize(), domain);
-    } catch (error) {
-      console.warn(`Error decomposing object of type ${this.type}:`, error);
+    } catch (_error) {
+      console.warn(`Error decomposing object of type ${this.type}:`, _error);
 
       return {
         primeFactors: [],
@@ -78,7 +78,7 @@ export function initializeDecompositionForUORObjects(): void {
 
   UORObject.prototype.computeCanonicalRepresentation = function (): CanonicalRepresentation {
     if (
-      this.constructor.prototype.hasOwnProperty('computeCanonicalRepresentation') &&
+      Object.hasOwn(this.constructor.prototype, 'computeCanonicalRepresentation') &&
       this.constructor.prototype.computeCanonicalRepresentation !==
         UORObject.prototype.computeCanonicalRepresentation
     ) {
@@ -121,10 +121,10 @@ export function initializeDecompositionForUORObjects(): void {
 
     try {
       return decompositionManager.computeCanonical(decomposition, domain);
-    } catch (error) {
+    } catch (_error) {
       console.warn(
         `Error computing canonical representation for object of type ${this.type}:`,
-        error
+        _error
       );
 
       return {

@@ -179,7 +179,7 @@ export class UORReferenceUtil {
     try {
       UORReferenceUtil.parse(reference);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

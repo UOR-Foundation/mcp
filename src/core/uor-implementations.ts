@@ -154,6 +154,7 @@ export class BaseUORObject extends UORObject {
    */
   measureCoherence(): CoherenceMeasure {
     // Import coherence metrics - done inline to avoid circular dependency
+    // Using dynamic import to avoid circular dependency
     const { CoherenceMetrics } = require('./uor-coherence');
 
     // Use the optimal coherence measure from our enhanced metrics
@@ -234,7 +235,7 @@ export class SimpleUORSchema extends UORSchema {
     // Convert schema to key-value pairs as prime factors
     const primeFactors: PrimeFactor[] = [];
 
-    const addSchemaProperties = (obj: any, path: string = '') => {
+    const addSchemaProperties = (obj: any, path: string = ''): void => {
       if (typeof obj !== 'object' || obj === null) return;
 
       for (const [key, value] of Object.entries(obj)) {

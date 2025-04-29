@@ -81,9 +81,9 @@ export class LinkedDataDecompositionAlgorithm extends BaseDecompositionAlgorithm
       );
     });
 
-    linkedData.edges.forEach((edge, index) => {
+    linkedData.edges.forEach((edge, _index) => {
       factors.push(
-        this.createPrimeFactor(`edge-${index}`, {
+        this.createPrimeFactor(`edge-${_index}`, {
           source: edge.source,
           target: edge.target,
           type: edge.type,
@@ -428,7 +428,7 @@ export class LinkedDataDecompositionAlgorithm extends BaseDecompositionAlgorithm
       properties: { ...node.properties },
     }));
 
-    const normalizedEdges = linkedData.edges.map((edge, index) => ({
+    const normalizedEdges = linkedData.edges.map((edge, _index) => ({
       source: nodeIdMap.get(edge.source) || edge.source,
       target: nodeIdMap.get(edge.target) || edge.target,
       type: edge.type,

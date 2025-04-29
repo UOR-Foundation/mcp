@@ -86,7 +86,7 @@ export class GitHubClient {
     try {
       await this.request(`/repos/${this.owner}/${this.repo}`);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -121,8 +121,8 @@ export class GitHubClient {
       await this.createInitialStructure();
 
       return true;
-    } catch (error) {
-      console.error('Error creating repository:', error);
+    } catch (_error) {
+      console.error('Error creating repository:', _error);
       return false;
     }
   }
@@ -153,8 +153,8 @@ export class GitHubClient {
       }
 
       return true;
-    } catch (error) {
-      console.error('Error initializing repository structure:', error);
+    } catch (_error) {
+      console.error('Error initializing repository structure:', _error);
       return false;
     }
   }
@@ -175,7 +175,7 @@ export class GitHubClient {
       // Decode content
       const content = atob(response.content);
       return { content, sha: response.sha };
-    } catch (error) {
+    } catch (_error) {
       // File not found
       return null;
     }
@@ -217,8 +217,8 @@ export class GitHubClient {
       });
 
       return true;
-    } catch (error) {
-      console.error(`Error ${sha ? 'updating' : 'creating'} file:`, error);
+    } catch (_error) {
+      console.error(`Error ${sha ? 'updating' : 'creating'} file:`, _error);
       return false;
     }
   }
@@ -246,8 +246,8 @@ export class GitHubClient {
       });
 
       return true;
-    } catch (error) {
-      console.error('Error deleting file:', error);
+    } catch (_error) {
+      console.error('Error deleting file:', _error);
       return false;
     }
   }
@@ -267,8 +267,8 @@ export class GitHubClient {
 
       // Filter out directories
       return Array.isArray(response) ? response : null;
-    } catch (error) {
-      console.error('Error listing files:', error);
+    } catch (_error) {
+      console.error('Error listing files:', _error);
       return null;
     }
   }

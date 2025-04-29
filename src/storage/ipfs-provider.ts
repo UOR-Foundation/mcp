@@ -458,7 +458,7 @@ export class IPFSStorageProvider extends BaseStorageProvider {
 
       if (
         !reference ||
-        !reference.hasOwnProperty('reference') ||
+        !Object.hasOwn(reference, 'reference') ||
         !(reference as any).reference?.cid
       ) {
         return null;
@@ -550,7 +550,7 @@ export class IPFSStorageProvider extends BaseStorageProvider {
 
       if (
         !reference ||
-        !reference.hasOwnProperty('reference') ||
+        !Object.hasOwn(reference, 'reference') ||
         !(reference as any).reference?.metadata
       ) {
         return null;

@@ -48,7 +48,7 @@ export class UORFactory {
         obj = new SimpleUORSchema(id, data);
         break;
 
-      case 'text':
+      case 'text': {
         const textArtifact = new TextArtifact(
           id,
           'text/plain',
@@ -61,6 +61,7 @@ export class UORFactory {
         }
 
         obj = textArtifact;
+      }
         break;
 
       case 'resolver':
