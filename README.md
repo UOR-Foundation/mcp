@@ -187,7 +187,7 @@ To deploy your own instance:
 2. Create a GitHub OAuth application in your [GitHub Developer Settings](https://github.com/settings/developers)
    - Set the Authorization Callback URL to `https://your-username.github.io/mcp/auth-callback.html`
 3. Create a token exchange proxy (see [Token Exchange Proxy Guide](docs/token-exchange-proxy.md))
-4. Run the deployment script: `./deploy-to-github-pages.sh`
+4. Run the deployment script: `./scripts/deploy-to-github-pages.sh`
 5. Access your deployment at `https://your-username.github.io/mcp/`
 
 Alternatively, you can use URL parameters to configure your deployment:
@@ -235,7 +235,7 @@ To use this MCP server with LLM applications:
 
 ## Contributing
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## Implementation Details
 
