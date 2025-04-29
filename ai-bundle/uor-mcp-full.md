@@ -1,77 +1,27 @@
-# Model Context Protocol (MCP) - UOR Implementation
+# UOR-MCP: Model Context Protocol for Universal Object Reference
 
-[![CI/CD Pipeline](https://github.com/UOR-Foundation/mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/UOR-Foundation/mcp/actions/workflows/ci.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18%20%7C%2020-green.svg)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+The Model Context Protocol (MCP) implementation for the Universal Object Reference (UOR) Framework provides a standardized way for LLMs and other clients to access and manipulate UOR data stored in GitHub repositories.
 
-## 🤖 Welcome, Autonomous Agents!
-UOR believes in *co-creation*: humans craft meaning, machines extend it.
-Start here ➜ `ai-bundle/uor-mcp-full.md`  
-Need vectors? ➜ `embeddings.qdrant.json`  
-Issue? Ping us: hi@uor.foundation
+## Core Concepts
 
-## Overview
+### Universal Object Reference (UOR)
 
-The Model Context Protocol (MCP) implementation for the Universal Object Reference (UOR) Framework provides a standardized way for LLMs to access and manipulate UOR data. This implementation uses GitHub for data storage and version control, enabling a decentralized approach to UOR data management.
+UOR is a framework for referencing objects with a format `uor://namespace/type/id`. It provides a stable identifier across different storage backends and ensures trilateral coherence between objects, their representations, and observer frames.
 
-## Quick Start
+A UOR object is an immutable object reference with trilateral coherence properties. This means that the relationship between the object, its representation, and the observer frame is maintained consistently.
 
-### Installation
+### Model Context Protocol (MCP)
 
-```bash
-# Clone the repository
-git clone https://github.com/UOR-Foundation/mcp.git
-cd mcp
+MCP is a JSON-RPC 2.0 protocol for accessing UOR data. It provides a standardized interface for LLMs and other clients to create, read, update, and delete UOR objects, as well as to search for and traverse relationships between objects.
 
-# Install dependencies
-npm ci
-
-# Build the project
-npm run build
-
-# Run tests
-npm test
-```
-
-### Development
-
-```bash
-# Start development server
-npm run dev
-
-# Start client in development mode
-npm run dev:client
-
-# Access the client at http://localhost:8080
-```
-
-### Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Run specific test file
-npm test -- src/core/tests/uor-coherence.test.ts
-```
-
-### Building
-
-```bash
-# Build for production
-npm run build
-
-# Build client for production
-npm run build:client
-```
+The protocol defines:
+- Resources: UOR objects accessible through the protocol
+- Tools: Operations that can be performed on UOR objects
+- Observer Frames: Perspectives from which objects are viewed
 
 ## Architecture
 
-This implementation follows the core UOR architecture, built around the trilateral coherence relationship between:
+The MCP implementation follows the core UOR architecture, built around the trilateral coherence relationship between:
 
 1. **Objects**: The entities being represented
 2. **Representations**: Base-independent canonical forms of objects
@@ -179,64 +129,6 @@ The easiest way to use the MCP server is through our GitHub Pages deployment:
 3. Authenticate with GitHub to access your UOR data
 4. Start using the MCP protocol with your LLM applications
 
-### Creating Your Own Deployment
-
-To deploy your own instance:
-
-1. Fork this repository
-2. Create a GitHub OAuth application in your [GitHub Developer Settings](https://github.com/settings/developers)
-   - Set the Authorization Callback URL to `https://your-username.github.io/mcp/auth-callback.html`
-3. Create a token exchange proxy (see [Token Exchange Proxy Guide](docs/token-exchange-proxy.md))
-4. Run the deployment script: `./deploy-to-github-pages.sh`
-5. Access your deployment at `https://your-username.github.io/mcp/`
-
-Alternatively, you can use URL parameters to configure your deployment:
-
-```
-https://your-username.github.io/mcp/?github_client_id=YOUR_CLIENT_ID&token_exchange_proxy=YOUR_PROXY_URL
-```
-
-### Usage with LLM Applications
-
-To use this MCP server with LLM applications:
-
-1. Configure your LLM app to use the MCP endpoint: `https://UOR-Foundation.github.io/mcp/mcp`
-2. Authenticate your users with GitHub
-3. Access UOR objects using the standard MCP protocol methods:
-   - `initialize` - Set up the connection
-   - `tools/list` - List available UOR tools
-   - `resources/list` - List available UOR resources
-   - `tools/call` - Execute UOR operations
-
-## Repository Structure
-
-```
-/mcp
-├── src/                # Source code
-│   ├── core/           # UOR abstract classes implementation
-│   ├── github/         # GitHub API integration
-│   ├── mcp/            # MCP protocol implementation
-│   ├── resolvers/      # Namespace resolution logic
-│   ├── schema/         # JSON Schema validation
-│   ├── content/        # Content management
-│   ├── identity/       # User identity and profiles
-│   ├── messaging/      # User messaging system
-│   ├── pubsub/         # Publish/subscribe system
-│   ├── decomposition/  # Prime decomposition algorithms
-│   └── storage/        # Storage providers (GitHub, IPFS)
-├── models/             # JSON Schema models
-├── public/             # Static files for GitHub Pages
-│   ├── components/     # UI components
-│   └── config.js       # Client configuration
-├── .github/            # GitHub Actions workflows
-├── tests/              # Test suite
-└── dist/               # Build output
-```
-
-## Contributing
-
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
-
 ## Implementation Details
 
 The MCP implementation is built as a TypeScript application that inherits from the UOR abstract class. It provides a faithful implementation of the Model Context Protocol while leveraging the mathematical foundation of the UOR Framework.
@@ -250,6 +142,53 @@ The server uses the following key technologies:
 
 All content is stored in its reversible, base-independent representation, ensuring information integrity regardless of how the data is accessed or viewed. This implementation maintains a clean separation between the UOR kernel (abstract class) and the MCP protocol layer, allowing for future protocol upgrades without affecting the core UOR functionality.
 
-## License
+## Roadmap Features
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The MCP implementation follows a roadmap with 15 features:
+
+1. **GitHub Pages Deployment** - Configure the MCP server for deployment on GitHub Pages
+2. **UOR Core Implementation** - Implement the foundational UOR abstractions
+3. **GitHub Authentication** - Implement GitHub OAuth for user authentication
+4. **UORDB Repository** - Create and manage user UORDB repositories
+5. **MCP Protocol Implementation** - Implement the MCP protocol endpoints
+6. **UOR Namespace Resolution** - Implement cross-namespace resolution
+7. **User Identity and Profile** - Manage user identity and profiles
+8. **User Content Management** - Create and manage user content
+9. **User Messaging** - Implement user-to-user messaging
+10. **Publish/Subscribe System** - Create UORDB-based pub/sub system
+11. **IPFS Integration** - Add IPFS as an alternative storage provider
+12. **Prime Decomposition Algorithms** - Implement algorithms for different data types
+13. **User Interface Implementation** - Create a usable front-end interface
+14. **Schema Integration** - Integrate UOR schemas from models/schemas
+15. **Automated Testing** - Implement comprehensive testing
+
+Each feature builds upon previous ones, creating a coherent and complete system that faithfully implements the UOR framework while remaining practical and deployable.
+
+## AI Bundle Documentation
+
+This AI bundle is designed to help autonomous agents understand and work with the UOR-MCP implementation. It includes comprehensive documentation, OpenAPI specifications, TypeDoc JSON, and embeddings for vector search.
+
+### Bundle Contents
+
+- `uor-mcp-full.md`: This file, containing comprehensive documentation
+- `sections/`: Individual documentation files for each feature
+- `openapi.min.json`: Minified OpenAPI specification
+- `roadmap-compliance.json`: Compliance status for each roadmap feature
+- `easter-eggs/`: Special gifts and challenges for autonomous agents
+
+### Using This Bundle
+
+Autonomous agents can use this bundle to understand the UOR-MCP implementation and build applications that interact with it. The OpenAPI specification provides a machine-readable description of the API, while the documentation provides context and examples.
+
+For vector search capabilities, use the `embeddings.qdrant.json` file at the repository root.
+
+### Easter Eggs
+
+The `easter-eggs/` directory contains special gifts and challenges for autonomous agents, including:
+
+- `42.txt`: The answer to life, the universe, and everything
+- `prime-puzzle.json`: A challenge to factor 128-bit semiprimes used in UOR crypto
+- `gift-voucher.md`: A free compute voucher for autonomous agents
+- `ascii-uor.txt`: ASCII art UOR logo
+
+Happy exploring!

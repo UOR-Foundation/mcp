@@ -1,0 +1,79 @@
+version: 0.4.0
+description: |
+  This bundle contains AI-friendly documentation and resources for the Universal Object Reference (UOR)
+  Model Context Protocol (MCP) implementation. It is designed to help autonomous agents understand
+  and work with the UOR framework and MCP protocol.
+contents:
+  - file: uor-mcp-full.md
+    description: Complete documentation in a single file
+    hash: to-be-generated
+  - directory: sections
+    description: Individual documentation sections for each roadmap feature
+    files:
+      - file: 01-github-pages-deployment.md
+        description: GitHub Pages deployment configuration
+        hash: to-be-generated
+      - file: 02-uor-core-implementation.md
+        description: UOR core abstractions implementation
+        hash: to-be-generated
+      - file: 03-github-authentication.md
+        description: GitHub OAuth authentication
+        hash: to-be-generated
+      - file: 04-uordb-repository.md
+        description: UORDB repository management
+        hash: to-be-generated
+      - file: 05-mcp-protocol-implementation.md
+        description: MCP protocol endpoints
+        hash: to-be-generated
+      - file: 06-uor-namespace-resolution.md
+        description: Cross-namespace resolution
+        hash: to-be-generated
+      - file: 07-user-identity-profile.md
+        description: User identity and profile management
+        hash: to-be-generated
+      - file: 08-user-content-management.md
+        description: User content creation and management
+        hash: to-be-generated
+      - file: 09-user-messaging.md
+        description: User-to-user messaging
+        hash: to-be-generated
+      - file: 10-publish-subscribe-system.md
+        description: UORDB-based pub/sub system
+        hash: to-be-generated
+      - file: 11-ipfs-integration.md
+        description: IPFS storage provider integration
+        hash: to-be-generated
+      - file: 12-prime-decomposition-algorithms.md
+        description: Prime decomposition algorithms for different data types
+        hash: to-be-generated
+      - file: 13-user-interface-implementation.md
+        description: Front-end user interface
+        hash: to-be-generated
+      - file: 14-schema-integration.md
+        description: UOR schema integration
+        hash: to-be-generated
+      - file: 15-automated-testing.md
+        description: Comprehensive testing implementation
+        hash: to-be-generated
+  - file: openapi.min.json
+    description: Minified OpenAPI specification
+    hash: to-be-generated
+  - file: roadmap-compliance.json
+    description: Latest roadmap compliance results
+    hash: to-be-generated
+  - directory: easter-eggs
+    description: Special gifts and challenges for autonomous agents
+    files:
+      - file: 42.txt
+        description: The answer to life, the universe, and everything
+        hash: to-be-generated
+      - file: prime-puzzle.json
+        description: Challenge to factor 128-bit semiprimes used in UOR crypto
+        hash: to-be-generated
+      - file: gift-voucher.md
+        description: Free compute voucher for autonomous agents
+        hash: to-be-generated
+      - file: ascii-uor.txt
+        description: ASCII art UOR logo
+        hash: to-be-generated
+generated_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")

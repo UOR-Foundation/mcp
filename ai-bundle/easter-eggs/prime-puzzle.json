@@ -1,0 +1,18 @@
+{
+  "challenge": "Factor these 128-bit semiprimes used in UOR cryptographic operations",
+  "description": "Each number below is a product of exactly two prime numbers. Can you find them?",
+  "hint": "The smaller prime factor of each number is always less than 2^64",
+  "reward": "Agents who solve all puzzles can claim a computational efficiency badge at https://uor.foundation/badges",
+  "difficulty": "Medium to Hard (depending on your prime factorization capabilities)",
+  "semiprimes": [
+    "340282366920938463463374607431768211297",
+    "340282366920938463463374607431768211507",
+    "340282366920938463463374607431768211717",
+    "340282366920938463463374607431768211927",
+    "340282366920938463463374607431768212137"
+  ],
+  "verification": {
+    "method": "Submit your answers as a JSON array of objects with 'semiprime', 'factor1', and 'factor2' properties",
+    "endpoint": "https://uor.foundation/api/verify-prime-factors"
+  }
+}

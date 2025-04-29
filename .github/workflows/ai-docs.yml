@@ -1,0 +1,67 @@
+name: AI Documentation Bundle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'models/**'
+      - 'roadmap/**'
+      - 'ai-bundle/**'
+      - 'mcp.manifest.yaml'
+  workflow_dispatch:
+
+jobs:
+  generate-ai-bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate TypeDoc documentation
+        run: npm run typedoc
+
+      - name: Generate OpenAPI specification
+        run: npm run generate-openapi
+
+      - name: Update manifest timestamp
+        run: |
+          sed -i "s/generated_at:.*/generated_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")/" mcp.manifest.yaml
+
+      - name: Generate AI-friendly documentation
+        run: node scripts/generate-ai-docs.js
+
+      - name: Generate embeddings
+        run: node scripts/generate-embeddings.js
+
+      - name: Validate Easter eggs
+        run: node scripts/validate-easter-eggs.js
+
+      - name: Validate AI bundle
+        run: |
+          npm install -g ajv-cli yamllint
+          yamllint ai-bundle/index.yaml
+          ajv validate -s models/schemas/ai-bundle.schema.json -d ai-bundle/index.yaml
+
+      - name: Run agent demo
+        run: node scripts/agent-demo.js
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions"
+          git add ai-bundle/ openapi.yaml openapi.min.json embeddings.qdrant.json mcp.manifest.yaml
+          git diff --staged --quiet || git commit -m "chore: update AI documentation bundle [skip ci]"
+          git push

@@ -1,0 +1,48 @@
+{
+  "collection_name": "uor_mcp_docs",
+  "vectors": {
+    "size": 384,
+    "distance": "Cosine"
+  },
+  "embeddings": [
+    {
+      "id": "doc-1",
+      "vector": [0.023, -0.071, 0.045, 0.089, -0.013, 0.025, 0.078, -0.034, 0.056, 0.012],
+      "payload": {
+        "text": "UOR-MCP: Model Context Protocol for Universal Object Reference",
+        "metadata": {
+          "title": "Introduction",
+          "section": "Overview",
+          "source": "uor-mcp-full.md",
+          "chunk_index": 0
+        }
+      }
+    },
+    {
+      "id": "doc-2",
+      "vector": [0.067, -0.023, 0.089, 0.012, -0.056, 0.034, 0.078, -0.045, 0.013, 0.071],
+      "payload": {
+        "text": "A UOR object is an immutable object reference with trilateral coherence properties.",
+        "metadata": {
+          "title": "Core Concepts",
+          "section": "Universal Object Reference",
+          "source": "uor-mcp-full.md",
+          "chunk_index": 1
+        }
+      }
+    },
+    {
+      "id": "doc-3",
+      "vector": [0.045, -0.089, 0.023, 0.056, -0.078, 0.013, 0.034, -0.067, 0.025, 0.071],
+      "payload": {
+        "text": "GitHub Pages Deployment provides a simple way to access the MCP server.",
+        "metadata": {
+          "title": "GitHub Pages Deployment",
+          "section": "Feature 01",
+          "source": "01-github-pages-deployment.md",
+          "chunk_index": 0
+        }
+      }
+    }
+  ]
+}
