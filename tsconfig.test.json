@@ -23,7 +23,9 @@
     "src/**/*.js",
     "src/**/*.test.ts",
     "src/**/*.test.js",
-    "src/tests/**/*"
+    "src/tests/**/*",
+    "src/tests/client-auth.test.js",
+    "src/tests/end-to-end/github-pages-integration.test.ts"
   ],
   "exclude": [
     "node_modules",
