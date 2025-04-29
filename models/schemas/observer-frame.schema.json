@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://uor-foundation.org/schemas/observer-frame.schema.json",
+  "title": "UOR Observer Frame Schema",
+  "description": "Schema defining observer frames for Universal Object Reference (UOR) framework",
+  "type": "object",
+  "required": ["id", "perspective", "parameters"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the observer frame",
+      "pattern": "^[a-zA-Z0-9-_]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the observer frame"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the observer frame"
+    },
+    "perspective": {
+      "type": "string",
+      "description": "Perspective from which objects are viewed",
+      "enum": ["objective", "subjective", "intersubjective"]
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameters defining the observer frame",
+      "properties": {
+        "referenceSystem": {
+          "type": "string",
+          "description": "Reference system used by the observer frame",
+          "enum": ["absolute", "relative", "contextual"]
+        },
+        "dimensionality": {
+          "type": "integer",
+          "description": "Number of dimensions in the observer frame",
+          "minimum": 1
+        },
+        "resolution": {
+          "type": "object",
+          "description": "Resolution of the observer frame",
+          "properties": {
+            "spatial": {
+              "type": "number",
+              "description": "Spatial resolution",
+              "minimum": 0
+            },
+            "temporal": {
+              "type": "number",
+              "description": "Temporal resolution",
+              "minimum": 0
+            },
+            "conceptual": {
+              "type": "number",
+              "description": "Conceptual resolution",
+              "minimum": 0
+            }
+          }
+        },
+        "contextFactors": {
+          "type": "array",
+          "description": "Contextual factors affecting the observer frame",
+          "items": {
+            "type": "object",
+            "required": ["name", "value"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the context factor"
+              },
+              "value": {
+                "description": "Value of the context factor",
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  { "type": "object" }
+                ]
+              },
+              "weight": {
+                "type": "number",
+                "description": "Weight of the context factor",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "transformations": {
+      "type": "array",
+      "description": "Transformations to other observer frames",
+      "items": {
+        "type": "object",
+        "required": ["targetFrame", "transformationType"],
+        "properties": {
+          "targetFrame": {
+            "type": "string",
+            "description": "Target observer frame ID"
+          },
+          "transformationType": {
+            "type": "string",
+            "description": "Type of transformation",
+            "enum": ["linear", "nonlinear", "contextual", "identity"]
+          },
+          "transformationParameters": {
+            "type": "object",
+            "description": "Parameters for the transformation"
+          },
+          "invariants": {
+            "type": "array",
+            "description": "Properties that remain invariant under this transformation",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "coherenceMeasures": {
+      "type": "object",
+      "description": "Coherence measures for this observer frame",
+      "properties": {
+        "internalCoherence": {
+          "type": "number",
+          "description": "Measure of internal coherence",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "externalCoherence": {
+          "type": "object",
+          "description": "Measures of coherence with other frames",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the observer frame",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Creator of the observer frame"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Last updater of the observer frame"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the observer frame"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

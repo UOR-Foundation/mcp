@@ -1,6 +1,8 @@
 import { UORObject } from '../core/uor-core';
 import { GitHubClient } from '../github/github-client';
 import { UORDBManager } from '../github/uordb-manager';
+import { SchemaIntegration } from '../schema/schema-integration';
+import { UORCoreSchema } from '../schema/schema-types';
 import PubSubManager from '../pubsub/pubsub-manager';
 import { EventBase, EventPriority, Channel, ChannelVisibility, ChannelSubscription } from '../pubsub/event-types';
 import { EventObject } from '../pubsub/event';
@@ -32,6 +34,7 @@ export class MCPServer {
   private static instance: MCPServer;
   private uordbManager: UORDBManager | null = null;
   private currentUser: { username: string, token: string } | null = null;
+  private schemaIntegration: SchemaIntegration | null = null;
   private pubSubManager: typeof PubSubManager;
   private messageManager: typeof MessageManager;
   private contentManager: typeof ContentManager;
@@ -39,6 +42,9 @@ export class MCPServer {
   private profileManager: ProfileManager;
 
   private constructor() {
+    // Initialize schema integration
+    this.schemaIntegration = SchemaIntegration.getInstance();
+    
     // Initialize all managers
     this.pubSubManager = PubSubManager;
     this.messageManager = MessageManager;
@@ -46,6 +52,7 @@ export class MCPServer {
     this.identityManager = IdentityManager.getInstance();
     this.profileManager = ProfileManager.getInstance();
   }
+
 
   public static getInstance(): MCPServer {
     if (!MCPServer.instance) {
@@ -253,6 +260,16 @@ export class MCPServer {
       ...data
     };
     
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(uorObject);
+      } catch (error: any) {
+        console.error('Schema validation failed for UOR object:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
+    
+    // Store in GitHub if authenticated
     if (this.uordbManager && this.currentUser) {
       await this.uordbManager.storeObject(this.currentUser.username, uorObject);
     } else {
@@ -281,6 +298,15 @@ export class MCPServer {
           id: reference,
           type: type
         };
+        
+        if (this.schemaIntegration) {
+          try {
+            this.schemaIntegration.conformUORObject(updatedObject);
+          } catch (error: any) {
+            console.error('Schema validation failed for updated UOR object:', error);
+            throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+          }
+        }
         
         await this.uordbManager.storeObject(this.currentUser.username, updatedObject);
         return true;
@@ -969,7 +995,19 @@ export class MCPServer {
       data.createdBy = this.currentUser.username;
     }
     
-    const concept = this.contentManager.createConcept(conceptId, data);
+    const fullData = data as ConceptContent;
+    
+    // Create the concept object
+    const concept = this.contentManager.createConcept(conceptId, fullData);
+    
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(concept);
+      } catch (error: any) {
+        console.error('Schema validation failed for concept:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
     
     await this.uordbManager.storeObject(this.currentUser.username, concept);
     
@@ -993,7 +1031,19 @@ export class MCPServer {
       data.createdBy = this.currentUser.username;
     }
     
-    const resource = this.contentManager.createResource(resourceId, data);
+    const fullData = data as ResourceContent;
+    
+    // Create the resource object
+    const resource = this.contentManager.createResource(resourceId, fullData);
+    
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(resource);
+      } catch (error: any) {
+        console.error('Schema validation failed for resource:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
     
     await this.uordbManager.storeObject(this.currentUser.username, resource);
     
@@ -1017,7 +1067,19 @@ export class MCPServer {
       data.createdBy = this.currentUser.username;
     }
     
-    const topic = this.contentManager.createTopic(topicId, data);
+    const fullData = data as TopicContent;
+    
+    // Create the topic object
+    const topic = this.contentManager.createTopic(topicId, fullData);
+    
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(topic);
+      } catch (error: any) {
+        console.error('Schema validation failed for topic:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
     
     await this.uordbManager.storeObject(this.currentUser.username, topic);
     
@@ -1041,7 +1103,19 @@ export class MCPServer {
       data.createdBy = this.currentUser.username;
     }
     
-    const predicate = this.contentManager.createPredicate(predicateId, data);
+    const fullData = data as PredicateContent;
+    
+    // Create the predicate object
+    const predicate = this.contentManager.createPredicate(predicateId, fullData);
+    
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(predicate);
+      } catch (error: any) {
+        console.error('Schema validation failed for predicate:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
     
     await this.uordbManager.storeObject(this.currentUser.username, predicate);
     
@@ -1065,7 +1139,19 @@ export class MCPServer {
       data.createdBy = this.currentUser.username;
     }
     
-    const media = this.contentManager.createMedia(mediaId, data);
+    const fullData = data as MediaContent;
+    
+    // Create the media object
+    const media = this.contentManager.createMedia(mediaId, fullData);
+    
+    if (this.schemaIntegration) {
+      try {
+        this.schemaIntegration.conformUORObject(media);
+      } catch (error: any) {
+        console.error('Schema validation failed for media:', error);
+        throw new Error(`Schema validation failed: ${error.message || 'Unknown validation error'}`);
+      }
+    }
     
     await this.uordbManager.storeObject(this.currentUser.username, media);
     
