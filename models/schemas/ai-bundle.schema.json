@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Bundle Index Schema",
+  "description": "Schema for validating the AI bundle index file",
+  "type": "object",
+  "required": ["version", "title", "description", "files", "sections", "metadata"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the AI bundle"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the AI bundle"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the AI bundle"
+    },
+    "files": {
+      "type": "object",
+      "description": "Files included in the AI bundle",
+      "required": ["documentation", "openapi", "embeddings"],
+      "properties": {
+        "documentation": {
+          "type": "object",
+          "required": ["path", "hash"],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to the documentation file"
+            },
+            "hash": {
+              "type": "string",
+              "description": "SHA-256 hash of the documentation file"
+            }
+          }
+        },
+        "openapi": {
+          "type": "object",
+          "required": ["path", "hash"],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to the OpenAPI specification file"
+            },
+            "hash": {
+              "type": "string",
+              "description": "SHA-256 hash of the OpenAPI specification file"
+            }
+          }
+        },
+        "embeddings": {
+          "type": "object",
+          "required": ["path", "hash"],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to the embeddings file"
+            },
+            "hash": {
+              "type": "string",
+              "description": "SHA-256 hash of the embeddings file"
+            }
+          }
+        }
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "hash"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the file"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the file"
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Sections of the AI bundle",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "path", "hash"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the section"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the section"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to the section file"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the section file"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the AI bundle",
+      "required": ["generated_at", "repository"],
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the AI bundle was generated"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository URL"
+        }
+      }
+    },
+    "easter_eggs": {
+      "type": "array",
+      "description": "Easter eggs included in the AI bundle",
+      "items": {
+        "type": "object",
+        "required": ["name", "path", "hash"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the easter egg"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to the easter egg file"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the easter egg file"
+          }
+        }
+      }
+    }
+  }
+}
