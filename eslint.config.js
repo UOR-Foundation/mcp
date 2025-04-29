@@ -63,5 +63,21 @@ export default [
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
     },
+  },
+  {
+    files: ['src/tests/client-auth.test.js', 'src/tests/end-to-end/github-pages-integration.test.ts'],
+    languageOptions: {
+      parser: null,
+      parserOptions: {
+        project: null
+      }
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    }
   }
 ];
