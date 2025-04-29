@@ -1,12 +1,11 @@
 import eslint from '@eslint/js';
 import parser from '@typescript-eslint/parser';
-import * as tseslintPlugin from '@typescript-eslint/eslint-plugin';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
 import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
   eslint.configs.recommended,
-  tseslintPlugin.configs.recommended,
   {
     languageOptions: {
       ecmaVersion: 2022,
@@ -17,7 +16,7 @@ export default [
       },
     },
     plugins: {
-      '@typescript-eslint': tseslintPlugin,
+      '@typescript-eslint': tsPlugin,
       'jest': jestPlugin,
       'prettier': prettierPlugin,
     },
