@@ -1,0 +1,247 @@
+openapi: 3.0.0
+info:
+  title: UOR-MCP API
+  version: 0.4.0
+  description: |
+    API for the Model Context Protocol (MCP) implementation of the Universal Object Reference (UOR) Framework.
+    
+    This API provides a standardized way for LLMs and other clients to access and manipulate UOR data
+    stored in GitHub repositories.
+  contact:
+    name: UOR Foundation
+    email: hi@uor.foundation
+    url: https://uor.foundation
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://UOR-Foundation.github.io/mcp
+    description: GitHub Pages deployment
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /mcp:
+    post:
+      summary: MCP JSON-RPC endpoint
+      description: Endpoint for all MCP JSON-RPC requests
+      operationId: mcpJsonRpc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JSONRPCRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JSONRPCResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JSONRPCError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JSONRPCError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JSONRPCError'
+
+  /auth-callback.html:
+    get:
+      summary: OAuth callback endpoint
+      description: Callback endpoint for GitHub OAuth authentication
+      operationId: authCallback
+      parameters:
+        - name: code
+          in: query
+          description: OAuth authorization code
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: OAuth state parameter
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Invalid request
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    JSONRPCRequest:
+      type: object
+      required:
+        - jsonrpc
+        - method
+        - id
+      properties:
+        jsonrpc:
+          type: string
+          enum: ['2.0']
+          description: JSON-RPC version
+        method:
+          type: string
+          description: Method to call
+          example: 'tools/call'
+        params:
+          type: object
+          description: Method parameters
+        id:
+          type: [string, number]
+          description: Request ID
+          example: 1
+
+    JSONRPCResponse:
+      type: object
+      required:
+        - jsonrpc
+        - id
+      properties:
+        jsonrpc:
+          type: string
+          enum: ['2.0']
+          description: JSON-RPC version
+        result:
+          type: object
+          description: Result object
+        error:
+          $ref: '#/components/schemas/JSONRPCErrorObject'
+        id:
+          type: [string, number]
+          description: Request ID matching the request
+
+    JSONRPCError:
+      type: object
+      required:
+        - jsonrpc
+        - error
+        - id
+      properties:
+        jsonrpc:
+          type: string
+          enum: ['2.0']
+          description: JSON-RPC version
+        error:
+          $ref: '#/components/schemas/JSONRPCErrorObject'
+        id:
+          type: [string, number, 'null']
+          description: Request ID matching the request, or null if unknown
+
+    JSONRPCErrorObject:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        data:
+          type: object
+          description: Additional error data
+
+    UORObject:
+      type: object
+      required:
+        - id
+        - type
+        - data
+      properties:
+        id:
+          type: string
+          description: UOR object ID
+        type:
+          type: string
+          description: UOR object type
+        data:
+          type: object
+          description: UOR object data
+        canonicalRepresentation:
+          type: object
+          description: Base-independent canonical representation
+        primeDecomposition:
+          type: object
+          description: Prime factorization of the object
+        observerFrame:
+          type: object
+          description: Observer frame for the object
+
+    UORReference:
+      type: string
+      description: UOR reference in the format uor://<namespace>/<type>/<id>
+      example: uor://example-user/concept/my-concept
+
+    MCPTool:
+      type: object
+      required:
+        - name
+        - description
+        - parameters
+      properties:
+        name:
+          type: string
+          description: Tool name
+        description:
+          type: string
+          description: Tool description
+        parameters:
+          type: object
+          description: Tool parameters schema
+
+    MCPResource:
+      type: object
+      required:
+        - uri
+        - type
+      properties:
+        uri:
+          type: string
+          description: Resource URI
+        type:
+          type: string
+          description: Resource type
+        metadata:
+          type: object
+          description: Resource metadata
+
+  securitySchemes:
+    githubOAuth:
+      type: oauth2
+      description: GitHub OAuth authentication
+      flows:
+        authorizationCode:
+          authorizationUrl: https://github.com/login/oauth/authorize
+          tokenUrl: https://github.com/login/oauth/access_token
+          scopes:
+            repo: Access to repositories
+
+security:
+  - githubOAuth: [repo]
