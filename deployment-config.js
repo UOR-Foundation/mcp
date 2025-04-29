@@ -1,7 +1,7 @@
 // Deployment-specific configuration for UOR MCP Server
 window.DEPLOYMENT_CONFIG = {
   githubUser: "UOR-Foundation",
-  deployedAt: "2025-04-29T12:36:32Z"
+  deployedAt: "2025-04-29T13:12:09Z"
 };
 
 // Apply the deployment configuration
