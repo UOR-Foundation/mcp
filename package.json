@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/UOR-Foundation/mcp#readme",
   "dependencies": {
-    "@octokit/rest": "^19.0.13",
+    "@octokit/rest": "^21.1.1",
     "@types/cors": "^2.8.17",
     "@types/json-schema": "^7.0.15",
     "ajv": "^8.17.1",
