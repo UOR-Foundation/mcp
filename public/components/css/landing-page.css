@@ -1,0 +1,240 @@
+/* Landing Page Styles */
+
+.landing-hero {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.hero-content {
+  flex: 1;
+  padding-right: 2rem;
+}
+
+.hero-image {
+  flex: 1;
+  text-align: center;
+}
+
+.hero-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #5f6368;
+  margin: 1rem 0 2rem 0;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.button.large {
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+.feature-section {
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+  margin-top: 0;
+  color: #1a73e8;
+}
+
+.getting-started-section {
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.steps-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.step-card {
+  position: relative;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.step-number {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  width: 40px;
+  height: 40px;
+  background-color: #1a73e8;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.use-cases-section {
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.use-case-tabs {
+  display: flex;
+  border-bottom: 1px solid #dadce0;
+  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+}
+
+.use-case-tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #5f6368;
+  position: relative;
+  transition: all 0.2s ease;
+  border-radius: 4px 4px 0 0;
+}
+
+.use-case-tab:hover {
+  color: #1a73e8;
+  background-color: rgba(232, 240, 254, 0.3);
+}
+
+.use-case-tab.active {
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.use-case-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #1a73e8;
+  border-radius: 3px 3px 0 0;
+}
+
+.use-case-pane {
+  display: none;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.use-case-pane.active {
+  display: block;
+}
+
+.use-case-pane h3 {
+  color: #1a73e8;
+  margin-top: 0;
+}
+
+.use-case-pane ul {
+  margin-top: 1rem;
+  padding-left: 1.5rem;
+}
+
+.use-case-pane li {
+  margin-bottom: 0.5rem;
+}
+
+.cta-section {
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: #e8f0fe;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.cta-section h2 {
+  color: #1a73e8;
+}
+
+.cta-section p {
+  margin: 1rem 0 2rem 0;
+  font-size: 1.1rem;
+}
+
+/* Responsive design for landing page */
+@media (max-width: 768px) {
+  .landing-hero {
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+  
+  .hero-content {
+    padding-right: 0;
+    padding-bottom: 1.5rem;
+  }
+  
+  .feature-grid,
+  .steps-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .use-case-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+  }
+}
