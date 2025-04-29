@@ -19,7 +19,7 @@
     "lint:fix": "eslint --ext .ts,.js src/ --fix",
     "format": "prettier --write \"src/**/*.{ts,js}\"",
     "prepare": "husky install",
-    "prepare-gh-pages": "npm run build && npm run build:client && npm run deploy",
+    "prepare-gh-pages": "npm run build && npm run build:client && node scripts/deploy-to-github-pages.sh",
     "analyze": "vite build --mode analyze",
     "docs": "typedoc",
     "dedupe": "npm dedupe",
