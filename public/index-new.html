@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UOR MCP Server</title>
+  
+  <!-- Base styles -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Component styles -->
+  <link rel="stylesheet" href="components/css/responsive.css">
+  <link rel="stylesheet" href="components/css/main-ui.css">
+  <link rel="stylesheet" href="components/css/landing-page.css">
+  <link rel="stylesheet" href="components/css/dashboard.css">
+  <link rel="stylesheet" href="components/css/content-manager.css">
+  <link rel="stylesheet" href="components/css/messaging.css">
+  <link rel="stylesheet" href="components/css/profile-management.css">
+  
+  <!-- Core scripts -->
+  <script src="config.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="mcp-client.js"></script>
+  <script src="mcp-handler.js"></script>
+  
+  <!-- Web App Manifest for PWA support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a73e8">
+</head>
+<body>
+  <div id="app-root">
+    <!-- Application content will be rendered here -->
+    <div class="loading-screen">
+      <div class="loading-logo">
+        <img src="./img/uor-logo.svg" alt="UOR Foundation Logo" onerror="this.src='./img/uor-logo-placeholder.png'; this.onerror=null;">
+      </div>
+      <div class="loading-text">Loading MCP-UOR System...</div>
+    </div>
+  </div>
+
+  <!-- Component scripts -->
+  <script src="components/js/landing-page.js"></script>
+  <script src="components/js/dashboard.js"></script>
+  <script src="components/js/content-manager.js"></script>
+  <script src="components/js/content-manager-events.js"></script>
+  <script src="components/js/content-manager-content.js"></script>
+  <script src="components/js/content-manager-operations.js"></script>
+  <script src="components/js/messaging.js"></script>
+  <script src="components/js/profile-management-base.js"></script>
+  <script src="components/js/profile-management-sections.js"></script>
+  <script src="components/js/profile-management-modals.js"></script>
+  <script src="components/js/main-ui.js"></script>
+  
+  <!-- Main application script -->
+  <script src="app-new.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(function(error) {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
