@@ -259,7 +259,7 @@ function getUsageExample(featureNumber, featureName) {
   const exampleMap = {
     '01': `// Access the MCP server via GitHub Pages
 const mcpClient = new MCPClient({
-  endpoint: 'https://UOR-Foundation.github.io/mcp/mcp'
+  endpoint: 'https://68113dd199a34737508b5211--uor-mcp.netlify.app/mcp'
 });`,
     '02': `// Create a new UOR object
 const uorObject = UORFactory.createObject('concept', {

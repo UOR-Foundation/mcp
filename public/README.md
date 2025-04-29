@@ -11,7 +11,7 @@ To use this GitHub Pages application:
    - `token_exchange_proxy`: URL of your token exchange proxy (see below)
    - `default_namespace`: (Optional) Default UOR namespace
 
-Example URL: `https://uor-foundation.github.io/mcp/?github_client_id=your_client_id&token_exchange_proxy=https://your-proxy.netlify.app/.netlify/functions/token-exchange`
+Example URL: `https://68113dd199a34737508b5211--uor-mcp.netlify.app/?github_client_id=your_client_id&token_exchange_proxy=https://your-proxy.netlify.app/.netlify/functions/token-exchange`
 
 ## GitHub Authentication
 
@@ -22,7 +22,7 @@ This application uses GitHub OAuth for authentication, which requires a server-s
 1. **Create a GitHub OAuth Application**:
    - Go to your GitHub account settings
    - Navigate to Developer Settings > OAuth Apps > New OAuth App
-   - Set the Authorization callback URL to match your deployment, e.g., `https://uor-foundation.github.io/mcp/auth-callback.html`
+   - Set the Authorization callback URL to match your deployment, e.g., `https://68113dd199a34737508b5211--uor-mcp.netlify.app/auth-callback.html`
    - Note the Client ID and Client Secret
 
 2. **Deploy a Token Exchange Proxy**:

@@ -174,7 +174,7 @@ This implementation provides access to the UOR core features:
 
 The easiest way to use the MCP server is through our GitHub Pages deployment:
 
-1. Visit [https://UOR-Foundation.github.io/mcp/](https://UOR-Foundation.github.io/mcp/)
+1. Visit [https://68113dd199a34737508b5211--uor-mcp.netlify.app/](https://68113dd199a34737508b5211--uor-mcp.netlify.app/)
 2. Configure the application with your GitHub Client ID and Token Exchange Proxy
 3. Authenticate with GitHub to access your UOR data
 4. Start using the MCP protocol with your LLM applications
@@ -185,22 +185,22 @@ To deploy your own instance:
 
 1. Fork this repository
 2. Create a GitHub OAuth application in your [GitHub Developer Settings](https://github.com/settings/developers)
-   - Set the Authorization Callback URL to `https://your-username.github.io/mcp/auth-callback.html`
+   - Set the Authorization Callback URL to `https://68113dd199a34737508b5211--uor-mcp.netlify.app/auth-callback.html`
 3. Create a token exchange proxy (see [Token Exchange Proxy Guide](docs/token-exchange-proxy.md))
 4. Run the deployment script: `./scripts/deploy-to-github-pages.sh`
-5. Access your deployment at `https://your-username.github.io/mcp/`
+5. Access your deployment at `https://68113dd199a34737508b5211--uor-mcp.netlify.app/`
 
 Alternatively, you can use URL parameters to configure your deployment:
 
 ```
-https://your-username.github.io/mcp/?github_client_id=YOUR_CLIENT_ID&token_exchange_proxy=YOUR_PROXY_URL
+https://68113dd199a34737508b5211--uor-mcp.netlify.app/?github_client_id=YOUR_CLIENT_ID&token_exchange_proxy=YOUR_PROXY_URL
 ```
 
 ### Usage with LLM Applications
 
 To use this MCP server with LLM applications:
 
-1. Configure your LLM app to use the MCP endpoint: `https://UOR-Foundation.github.io/mcp/mcp`
+1. Configure your LLM app to use the MCP endpoint: `https://68113dd199a34737508b5211--uor-mcp.netlify.app/mcp`
 2. Authenticate your users with GitHub
 3. Access UOR objects using the standard MCP protocol methods:
    - `initialize` - Set up the connection

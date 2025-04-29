@@ -124,7 +124,7 @@ This implementation provides access to the UOR core features:
 
 The easiest way to use the MCP server is through our GitHub Pages deployment:
 
-1. Visit [https://UOR-Foundation.github.io/mcp/](https://UOR-Foundation.github.io/mcp/)
+1. Visit [https://68113dd199a34737508b5211--uor-mcp.netlify.app/](https://68113dd199a34737508b5211--uor-mcp.netlify.app/)
 2. Configure the application with your GitHub Client ID and Token Exchange Proxy
 3. Authenticate with GitHub to access your UOR data
 4. Start using the MCP protocol with your LLM applications
