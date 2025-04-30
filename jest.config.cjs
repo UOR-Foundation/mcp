@@ -27,7 +27,8 @@ module.exports = {
     '!src/**/__mocks__/**',
     '!src/**/tests/**',
     '!src/**/types/**',
-    '!src/**/*.d.ts'
+    '!src/**/*.d.ts',
+    '!netlify/functions/**'
   ],
   coverageThreshold: {
     global: {
