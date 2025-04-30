@@ -95,7 +95,6 @@ export class SchemaLoader {
    */
   private async initializeNode(): Promise<void> {
     const fs = require('fs');
-    const path = require('path');
 
     if (!fs.existsSync(this.schemasDir)) {
       throw new Error(`Schemas directory not found: ${this.schemasDir}`);
