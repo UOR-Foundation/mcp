@@ -38,13 +38,14 @@ export default [
     ]
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.cjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
         ...globals.node,
         ...globals.browser,
+        ...globals.jest,
         Buffer: 'readonly',
         console: 'readonly',
         process: 'readonly',
@@ -56,7 +57,14 @@ export default [
         document: 'readonly',
         fetch: 'readonly',
         localStorage: 'readonly',
-        sessionStorage: 'readonly'
+        sessionStorage: 'readonly',
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly'
       }
     },
     rules: {
