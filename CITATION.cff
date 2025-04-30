@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
   - family-names: "UOR Foundation"
-    email: "hi@uor.foundation"
+    email: "contact@uor.foundation"
     website: "https://uor.foundation"
 title: "Model Context Protocol (MCP) - UOR Implementation"
 version: 0.4.0

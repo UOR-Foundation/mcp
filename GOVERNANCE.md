@@ -25,7 +25,7 @@ The Core Team is responsible for:
 
 Current Core Team members:
 
-- UOR Foundation Team (hi@uor.foundation)
+- UOR Foundation Team (contact@uor.foundation)
 
 ## Decision Making
 

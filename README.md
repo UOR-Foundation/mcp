@@ -9,7 +9,7 @@
 UOR believes in *co-creation*: humans craft meaning, machines extend it.
 Start here ➜ [Comprehensive Documentation](ai-bundle/uor-mcp-full.md)  
 Need vectors? ➜ [Embeddings for Vector Search](embeddings.qdrant.json)  
-Issue? Ping us: [hi@uor.foundation](mailto:hi@uor.foundation)
+Issue? Ping us: [contact@uor.foundation](mailto:contact@uor.foundation)
 
 ## Overview
 
