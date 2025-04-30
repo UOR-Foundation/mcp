@@ -17,7 +17,7 @@ The UOR Foundation takes the security of our software products and services seri
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them to [security@uor.foundation](mailto:security@uor.foundation). If possible, encrypt your message with our PGP key.
+Instead, please report them to [contact@uor.foundation](mailto:contact@uor.foundation). If possible, encrypt your message with our PGP key.
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
