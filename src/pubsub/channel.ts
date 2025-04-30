@@ -33,7 +33,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
       description: data.description || '',
       namespace: data.namespace || '',
       contentType: data.contentType || 'generic',
-      visibility: data.visibility || ChannelVisibility.PUBLIC,
+      visibility: data.visibility || ChannelVisibility._PUBLIC,
       createdAt: data.createdAt || new Date(),
       updatedAt: data.updatedAt || new Date(),
       createdBy: data.createdBy || '',
@@ -110,7 +110,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
    * @param key Metadata key to remove
    */
   removeMetadata(key: string): void {
-    const { [key]: removed, ...rest } = this.data.metadata;
+    const { [key]: _removed, ...rest } = this.data.metadata;
     this.data.metadata = rest;
     this.data.updatedAt = new Date();
   }
