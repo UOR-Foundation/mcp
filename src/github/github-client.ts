@@ -279,7 +279,7 @@ export class GitHubClient {
    * @param options Request options
    * @returns The response data
    */
-  async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+  async request(endpoint: string, options: Record<string, any> = {}): Promise<any> {
     // Set up headers
     const headers = {
       Accept: 'application/vnd.github.v3+json',
