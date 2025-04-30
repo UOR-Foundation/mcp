@@ -76,7 +76,7 @@ export class EventObject extends UORObject implements EventUORObject {
    * @param key Metadata key to remove
    */
   removeMetadata(key: string): void {
-    const { [key]: _, ...rest } = this.data.metadata;
+    const { [key]: removed, ...rest } = this.data.metadata;
     this.data.metadata = rest;
   }
 
