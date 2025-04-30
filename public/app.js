@@ -705,7 +705,7 @@ function showMessage(message, type = 'info') {
   messageElement.textContent = message;
   
   // Add to status container
-  const statusContainer = document.getElementById('status-messages');
+  let statusContainer = document.getElementById('status-messages');
   if (!statusContainer) {
     console.warn('Status container not found, creating one');
     const newContainer = document.createElement('div');
