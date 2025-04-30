@@ -43,7 +43,7 @@ export class BaseUORObject extends UORObject {
    * @param newFrame The new observer frame to transform to
    * @returns A new UOR object in the new observer frame
    */
-  transformToFrame(newFrame: ObserverFrame): UORObject {
+  transformToFrame(_newFrame: ObserverFrame): UORObject {
     // Create a new object with the same content but different frame
     const transformed = new BaseUORObject(this.id, this.type, this.data, this.domain);
 
@@ -57,7 +57,7 @@ export class BaseUORObject extends UORObject {
     }
 
     // Set the new observer frame
-    transformed.observerFrame = newFrame;
+    transformed.observerFrame = _newFrame;
 
     return transformed;
   }
@@ -209,7 +209,7 @@ export class SimpleUORSchema extends UORSchema {
    * @param newFrame The new observer frame to transform to
    * @returns A new UOR object in the new observer frame
    */
-  transformToFrame(newFrame: ObserverFrame): UORObject {
+  transformToFrame(_newFrame: ObserverFrame): UORObject {
     // Create a new schema with the same content but different frame
     const transformed = new SimpleUORSchema(this.id, this.schema);
 
@@ -223,7 +223,7 @@ export class SimpleUORSchema extends UORSchema {
     }
 
     // Set the new observer frame
-    transformed.observerFrame = newFrame;
+    transformed.observerFrame = _newFrame;
 
     return transformed;
   }
@@ -254,7 +254,7 @@ export class SimpleUORSchema extends UORSchema {
         } else if (key === 'required' && Array.isArray(value)) {
           // Handle required properties
           const factor: PrimeFactor = {
-            id: `schema:required`,
+            id: 'schema:required',
             value: { required: value } as any,
             domain: 'schema',
           };
@@ -411,7 +411,7 @@ export class TextArtifact extends UORArtifact {
    * @param newFrame The new observer frame to transform to
    * @returns A new UOR object in the new observer frame
    */
-  transformToFrame(newFrame: ObserverFrame): UORObject {
+  transformToFrame(_newFrame: ObserverFrame): UORObject {
     // Create a new artifact with the same content but different frame
     const transformed = new TextArtifact(this.id, this.mimeType, this.size);
 
@@ -428,7 +428,7 @@ export class TextArtifact extends UORArtifact {
     }
 
     // Set the new observer frame
-    transformed.observerFrame = newFrame;
+    transformed.observerFrame = _newFrame;
 
     return transformed;
   }
@@ -574,7 +574,7 @@ export class GitHubNamespaceResolver extends UORResolver {
    * @param newFrame The new observer frame to transform to
    * @returns A new UOR object in the new observer frame
    */
-  transformToFrame(newFrame: ObserverFrame): UORObject {
+  transformToFrame(_newFrame: ObserverFrame): UORObject {
     // Create a new resolver with the same content but different frame
     const transformed = new GitHubNamespaceResolver(
       this.id,
@@ -592,7 +592,7 @@ export class GitHubNamespaceResolver extends UORResolver {
     }
 
     // Set the new observer frame
-    transformed.observerFrame = newFrame;
+    transformed.observerFrame = _newFrame;
 
     return transformed;
   }
