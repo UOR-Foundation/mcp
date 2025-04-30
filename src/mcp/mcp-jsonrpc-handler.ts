@@ -158,7 +158,7 @@ export class MCPJSONRPCHandler {
       if (method === 'nonExistentMethod') {
         return this.createErrorResponse(
           id,
-          JSONRPCErrorCode.MethodNotFound,
+          JSONRPCErrorCode._MethodNotFound,
           `Method not found: ${method}`
         );
       }
@@ -246,7 +246,7 @@ export class MCPJSONRPCHandler {
           } catch (_error) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.MethodNotFound,
+              JSONRPCErrorCode._MethodNotFound,
               `Method not found: ${method}`
             );
           }
