@@ -1,6 +1,7 @@
 // eslint.config.js
 import parser from '@typescript-eslint/parser';
 import js from '@eslint/js';
+import globals from 'globals';
 
 export default [
   js.configs.recommended,
@@ -10,6 +11,13 @@ export default [
       parser,
       ecmaVersion: 2022,
       sourceType: 'module',
+      globals: {
+        ...globals.node,
+        Buffer: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly'
+      }
     },
     rules: {
       semi: ['error', 'always'],
@@ -25,7 +33,36 @@ export default [
       '**/*.test.js',
       'src/tests/**',
       'jest.config.js',
+      'jest.config.cjs',
       'vite.config.ts'
     ]
+  },
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        Buffer: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+        __dirname: 'readonly',
+        module: 'readonly',
+        global: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        fetch: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly'
+      }
+    },
+    rules: {
+      semi: ['error', 'always'],
+      quotes: ['error', 'single'],
+      'no-unused-vars': 'warn',
+    }
   }
 ];
