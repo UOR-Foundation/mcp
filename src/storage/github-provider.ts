@@ -365,7 +365,7 @@ export class GitHubStorageProvider extends BaseStorageProvider {
     try {
       this.githubClient.setOwner(username);
       return await this.githubClient.getFile(path);
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

@@ -32,7 +32,7 @@ export class EventObject extends UORObject implements EventUORObject {
       type: data.type || 'generic',
       publisher: data.publisher || '',
       timestamp: data.timestamp || new Date(),
-      priority: data.priority || EventPriority.NORMAL,
+      priority: data.priority || EventPriority._NORMAL,
       metadata: data.metadata || {},
       payload: data.payload || null,
       channelId: data.channelId || '',
@@ -76,7 +76,7 @@ export class EventObject extends UORObject implements EventUORObject {
    * @param key Metadata key to remove
    */
   removeMetadata(key: string): void {
-    const { [key]: _, ...rest } = this.data.metadata;
+    const { [key]: _removed, ...rest } = this.data.metadata;
     this.data.metadata = rest;
   }
 
@@ -225,7 +225,7 @@ export class EventObject extends UORObject implements EventUORObject {
     if (Array.isArray(this.data.payload)) {
       try {
         return [...this.data.payload].sort();
-      } catch (e) {
+      } catch {
         return this.data.payload;
       }
     }

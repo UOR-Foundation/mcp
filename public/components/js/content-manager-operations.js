@@ -182,7 +182,7 @@ ContentManagerComponent.prototype.getTypeSpecificFields = function() {
  */
 ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
   switch (this.currentType) {
-    case 'concept':
+    case 'concept': {
       const definitionInput = form.querySelector('#concept-definition');
       const examplesInput = form.querySelector('#concept-examples');
       
@@ -194,8 +194,9 @@ ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
         data.examples = examplesInput.value.split('\n').filter(example => example.trim());
       }
       break;
+    }
     
-    case 'resource':
+    case 'resource': {
       const urlInput = form.querySelector('#resource-url');
       const mimeTypeInput = form.querySelector('#resource-mime-type');
       
@@ -207,8 +208,9 @@ ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
         data.mimeType = mimeTypeInput.value;
       }
       break;
+    }
     
-    case 'topic':
+    case 'topic': {
       const summaryInput = form.querySelector('#topic-summary');
       const parentInput = form.querySelector('#topic-parent');
       
@@ -220,8 +222,9 @@ ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
         data.parent = parentInput.value;
       }
       break;
+    }
     
-    case 'predicate':
+    case 'predicate': {
       const domainInput = form.querySelector('#predicate-domain');
       const rangeInput = form.querySelector('#predicate-range');
       
@@ -233,8 +236,9 @@ ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
         data.range = rangeInput.value;
       }
       break;
+    }
     
-    case 'resolver':
+    case 'resolver': {
       const sourceInput = form.querySelector('#resolver-source');
       const targetInput = form.querySelector('#resolver-target');
       const bidirectionalInput = form.querySelector('#resolver-bidirectional');
@@ -251,6 +255,7 @@ ContentManagerComponent.prototype.addTypeSpecificData = function(data, form) {
         data.bidirectional = bidirectionalInput.checked;
       }
       break;
+    }
   }
 };
 
