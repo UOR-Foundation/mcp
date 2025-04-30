@@ -110,7 +110,7 @@ export class ChannelObject extends UORObject implements ChannelUORObject {
    * @param key Metadata key to remove
    */
   removeMetadata(key: string): void {
-    const { [key]: _, ...rest } = this.data.metadata;
+    const { [key]: removed, ...rest } = this.data.metadata;
     this.data.metadata = rest;
     this.data.updatedAt = new Date();
   }
