@@ -582,7 +582,7 @@ class MainUIComponent {
       `;
     });
     
-    html += `</div>`;
+    html += '</div>';
     
     container.innerHTML = html;
     

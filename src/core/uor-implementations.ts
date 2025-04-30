@@ -254,7 +254,7 @@ export class SimpleUORSchema extends UORSchema {
         } else if (key === 'required' && Array.isArray(value)) {
           // Handle required properties
           const factor: PrimeFactor = {
-            id: `schema:required`,
+            id: 'schema:required',
             value: { required: value } as any,
             domain: 'schema',
           };
