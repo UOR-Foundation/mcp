@@ -26,8 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Display MCP protocol version
     if (capabilities && capabilities.protocolVersion) {
-      document.getElementById('mcp-protocol-version').textContent = 
-        `MCP Protocol: ${capabilities.protocolVersion}`;
+      const protocolVersionElement = document.getElementById('mcp-protocol-version');
+      if (protocolVersionElement) {
+        protocolVersionElement.textContent = `MCP Protocol: ${capabilities.protocolVersion}`;
+      }
     }
     
     // If authentication is available, show UI elements
