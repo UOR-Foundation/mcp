@@ -82,7 +82,7 @@ export type JSONRPCMessage =
 export enum JSONRPCErrorCode {
   _ParseError = -32700,
   _InvalidRequest = -32600,
-  MethodNotFound = -32601,
+  _MethodNotFound = -32601,
   _InvalidParams = -32602,
   _InternalError = -32603,
   // Server errors -32000 to -32099
