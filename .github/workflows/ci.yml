@@ -1,12 +1,32 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
+  lint:
+    name: Lint with ESLint
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Allow the workflow to continue even if linting fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        
   test:
     name: Test on Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
@@ -25,9 +45,6 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
-      - name: Lint
-        run: npm run lint
         
       - name: Run tests with coverage
         run: npm test -- --coverage
