@@ -319,10 +319,10 @@ describe('Client-side Auth Service', () => {
 
           // Simulation fallback for development only
           return {
-            access_token: `simulated_token`,
+            access_token: 'simulated_token',
             token_type: 'bearer',
             scope: 'repo',
-            refresh_token: `simulated_refresh`,
+            refresh_token: 'simulated_refresh',
             expires_in: 3600,
           };
         }
@@ -369,10 +369,10 @@ describe('Client-side Auth Service', () => {
           ) {
             console.warn('Using simulated token exchange for development');
             return {
-              access_token: `simulated_token`,
+              access_token: 'simulated_token',
               token_type: 'bearer',
               scope: 'repo',
-              refresh_token: `simulated_refresh`,
+              refresh_token: 'simulated_refresh',
               expires_in: 3600,
             };
           }

@@ -2,16 +2,12 @@ import {
   JSONRPCRequest,
   JSONRPCResponse,
   JSONRPCErrorResponse,
-  JSONRPCError,
   JSONRPCErrorCode,
   JSONRPCBatchRequest,
   JSONRPCBatchResponse,
-  MCPServerCapabilities,
-  JSONRPCNotification,
   JSONRPC_VERSION,
   MCP_PROTOCOL_VERSION,
   RequestId,
-  MCPImplementation,
   MCPResource,
 } from './mcp-jsonrpc';
 // Import the MCPServer
@@ -66,11 +62,11 @@ export class MCPJSONRPCHandler {
 
         // Special case for test handling - use ParseError for empty objects
         if (typeof request === 'object' && Object.keys(request).length === 0) {
-          return this.createErrorResponse(id, JSONRPCErrorCode.ParseError, 'Parse error');
+          return this.createErrorResponse(id, JSONRPCErrorCode._ParseError, 'Parse error');
         }
         return this.createErrorResponse(
           id,
-          JSONRPCErrorCode.InvalidRequest,
+          JSONRPCErrorCode._InvalidRequest,
           'Invalid JSON-RPC request'
         );
       }
@@ -79,13 +75,13 @@ export class MCPJSONRPCHandler {
     } catch (error) {
       // Handle parsing errors
       if (error instanceof SyntaxError) {
-        return this.createErrorResponse('1', JSONRPCErrorCode.ParseError, 'Parse error');
+        return this.createErrorResponse('1', JSONRPCErrorCode._ParseError, 'Parse error');
       }
 
       // Handle any other errors
       return this.createErrorResponse(
         request?.id || '1',
-        JSONRPCErrorCode.InternalError,
+        JSONRPCErrorCode._InternalError,
         `Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
@@ -102,7 +98,7 @@ export class MCPJSONRPCHandler {
     if (!Array.isArray(batchRequest) || batchRequest.length === 0) {
       const errorResponse = this.createErrorResponse(
         null,
-        JSONRPCErrorCode.InvalidRequest,
+        JSONRPCErrorCode._InvalidRequest,
         'Invalid batch request'
       );
       return [errorResponse];
@@ -121,7 +117,7 @@ export class MCPJSONRPCHandler {
         responses.push(
           this.createErrorResponse(
             (request as any).id || null,
-            JSONRPCErrorCode.InvalidRequest,
+            JSONRPCErrorCode._InvalidRequest,
             'Invalid JSON-RPC request'
           )
         );
@@ -154,7 +150,7 @@ export class MCPJSONRPCHandler {
       if (method === 'resolveUOR' && (!params || !params.uorReference)) {
         return this.createErrorResponse(
           id,
-          JSONRPCErrorCode.InvalidParams,
+          JSONRPCErrorCode._InvalidParams,
           'Missing required parameter: uorReference'
         );
       }
@@ -193,7 +189,7 @@ export class MCPJSONRPCHandler {
           if (!params || !params.namespace || !params.type || !params.data) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.InvalidParams,
+              JSONRPCErrorCode._InvalidParams,
               'Missing required parameters for createUOR'
             );
           }
@@ -203,7 +199,7 @@ export class MCPJSONRPCHandler {
           if (!params || !params.uorReference || !params.data) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.InvalidParams,
+              JSONRPCErrorCode._InvalidParams,
               'Missing required parameters for updateUOR'
             );
           }
@@ -213,7 +209,7 @@ export class MCPJSONRPCHandler {
           if (!params || !params.uorReference) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.InvalidParams,
+              JSONRPCErrorCode._InvalidParams,
               'Missing required parameter: uorReference'
             );
           }
@@ -223,7 +219,7 @@ export class MCPJSONRPCHandler {
           if (!params || !params.namespace || !params.type) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.InvalidParams,
+              JSONRPCErrorCode._InvalidParams,
               'Missing required parameters for listUORObjects'
             );
           }
@@ -233,7 +229,7 @@ export class MCPJSONRPCHandler {
           if (!params || !params.query) {
             return this.createErrorResponse(
               id,
-              JSONRPCErrorCode.InvalidParams,
+              JSONRPCErrorCode._InvalidParams,
               'Missing required parameter: query'
             );
           }
@@ -247,7 +243,7 @@ export class MCPJSONRPCHandler {
           // Forward to the existing MCP server for backward compatibility
           try {
             result = await this.mcpServer.handleRequest(method, params);
-          } catch (error) {
+          } catch (_error) {
             return this.createErrorResponse(
               id,
               JSONRPCErrorCode.MethodNotFound,
@@ -273,7 +269,7 @@ export class MCPJSONRPCHandler {
       if (method === 'uor.internalError') {
         return this.createErrorResponse(
           id,
-          JSONRPCErrorCode.InternalError,
+          JSONRPCErrorCode._InternalError,
           `Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
@@ -281,7 +277,7 @@ export class MCPJSONRPCHandler {
       // Return internal error for other exceptions
       return this.createErrorResponse(
         id,
-        JSONRPCErrorCode.InternalError,
+        JSONRPCErrorCode._InternalError,
         `Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
@@ -299,7 +295,7 @@ export class MCPJSONRPCHandler {
 
     if (!supportedVersions.includes(clientVersion)) {
       throw {
-        code: JSONRPCErrorCode.InvalidRequest,
+        code: JSONRPCErrorCode._InvalidRequest,
         message: `Unsupported protocol version: ${clientVersion}. Supported versions: ${supportedVersions.join(', ')}`,
       };
     }
@@ -347,7 +343,7 @@ Resources are available using the uor:// scheme.
    */
   private async handleListTools(params: any): Promise<any> {
     // Implement pagination in the future if needed
-    const cursor = params?.cursor;
+    const _cursor = params?.cursor;
 
     // Define UOR tools
     const tools = [
@@ -487,7 +483,7 @@ Resources are available using the uor:// scheme.
    * @param params The params (may include pagination cursor)
    * @returns The list of available resources
    */
-  private async handleListResources(params: any): Promise<any> {
+  private async handleListResources(_params: any): Promise<any> {
     // Check if user is authenticated for personalized resources
     const isAuthenticated = this.mcpServer.isAuthenticated();
     const username = this.mcpServer.getCurrentUsername();
@@ -539,7 +535,7 @@ Resources are available using the uor:// scheme.
             });
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // If repository doesn't exist yet, just add basic repository resource
         resources.push({
           name: 'User Repository',
@@ -566,7 +562,7 @@ Resources are available using the uor:// scheme.
 
     if (!name) {
       throw {
-        code: JSONRPCErrorCode.InvalidParams,
+        code: JSONRPCErrorCode._InvalidParams,
         message: 'Tool name is required',
       };
     }

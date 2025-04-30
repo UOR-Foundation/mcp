@@ -172,7 +172,7 @@ export class SchemaLoader {
   private async loadSchemaBrowser(schemaId: string, schema: JSONSchema7): Promise<void> {
     try {
       if (!schema.$id) {
-        throw new Error(`Schema is missing $id property`);
+        throw new Error('Schema is missing $id property');
       }
 
       const schemaSource: SchemaSource = {

@@ -296,7 +296,7 @@ export class NamespaceResolver {
 
       // Return true if the file exists
       return !!file;
-    } catch (error) {
+    } catch (_error) {
       // If any error occurs, assume the file doesn't exist
       return false;
     }
