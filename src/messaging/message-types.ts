@@ -9,21 +9,21 @@ import { UORObject } from '../core/uor-core';
  * Message status enum
  */
 export enum MessageStatus {
-  DRAFT = 'draft',
-  SENT = 'sent',
-  DELIVERED = 'delivered',
-  READ = 'read',
-  FAILED = 'failed',
+  _DRAFT = 'draft',
+  _SENT = 'sent',
+  _DELIVERED = 'delivered',
+  _READ = 'read',
+  _FAILED = 'failed',
 }
 
 /**
  * Message priority enum
  */
 export enum MessagePriority {
-  LOW = 'low',
-  NORMAL = 'normal',
-  HIGH = 'high',
-  URGENT = 'urgent',
+  _LOW = 'low',
+  _NORMAL = 'normal',
+  _HIGH = 'high',
+  _URGENT = 'urgent',
 }
 
 /**
@@ -94,11 +94,11 @@ export interface MessageSubscription {
  */
 export interface MessageUORObject extends UORObject {
   getMessageData(): MessageBase;
-  updateMessage(message: Partial<MessageBase>): void;
-  setStatus(status: MessageStatus): void;
-  addTag(tag: string): void;
-  removeTag(tag: string): void;
-  encrypt(algorithm: string, keyId?: string): void;
+  updateMessage(_message: Partial<MessageBase>): void;
+  setStatus(_status: MessageStatus): void;
+  addTag(_tag: string): void;
+  removeTag(_tag: string): void;
+  encrypt(_algorithm: string, _keyId?: string): void;
   decrypt(): string;
 }
 
@@ -107,13 +107,13 @@ export interface MessageUORObject extends UORObject {
  */
 export interface ThreadUORObject extends UORObject {
   getThreadData(): MessageThread;
-  updateThread(thread: Partial<MessageThread>): void;
-  addMessage(messageId: string): void;
-  removeMessage(messageId: string): void;
-  addParticipant(participantId: string): void;
-  removeParticipant(participantId: string): void;
-  addTag(tag: string): void;
-  removeTag(tag: string): void;
+  updateThread(_thread: Partial<MessageThread>): void;
+  addMessage(_messageId: string): void;
+  removeMessage(_messageId: string): void;
+  addParticipant(_participantId: string): void;
+  removeParticipant(_participantId: string): void;
+  addTag(_tag: string): void;
+  removeTag(_tag: string): void;
 }
 
 /**
@@ -121,9 +121,9 @@ export interface ThreadUORObject extends UORObject {
  */
 export interface SubscriptionUORObject extends UORObject {
   getSubscriptionData(): MessageSubscription;
-  updateSubscription(subscription: Partial<MessageSubscription>): void;
+  updateSubscription(_subscription: Partial<MessageSubscription>): void;
   updateNotificationPreferences(
-    preferences: Partial<MessageSubscription['notificationPreferences']>
+    _preferences: Partial<MessageSubscription['notificationPreferences']>
   ): void;
-  updateCriteria(criteria: Partial<MessageSubscription['criteria']>): void;
+  updateCriteria(_criteria: Partial<MessageSubscription['criteria']>): void;
 }
