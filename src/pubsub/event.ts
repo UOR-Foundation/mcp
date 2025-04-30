@@ -225,7 +225,7 @@ export class EventObject extends UORObject implements EventUORObject {
     if (Array.isArray(this.data.payload)) {
       try {
         return [...this.data.payload].sort();
-      } catch (e) {
+      } catch {
         return this.data.payload;
       }
     }
