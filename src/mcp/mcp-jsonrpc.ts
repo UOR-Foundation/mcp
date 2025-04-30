@@ -80,16 +80,16 @@ export type JSONRPCMessage =
 
 // Standard JSON-RPC error codes
 export enum JSONRPCErrorCode {
-  ParseError = -32700,
-  InvalidRequest = -32600,
+  _ParseError = -32700,
+  _InvalidRequest = -32600,
   MethodNotFound = -32601,
-  InvalidParams = -32602,
-  InternalError = -32603,
+  _InvalidParams = -32602,
+  _InternalError = -32603,
   // Server errors -32000 to -32099
-  AuthenticationRequired = -32000,
-  PermissionDenied = -32001,
-  ResourceNotFound = -32002,
-  ValidationError = -32003,
+  _AuthenticationRequired = -32000,
+  _PermissionDenied = -32001,
+  _ResourceNotFound = -32002,
+  _ValidationError = -32003,
 }
 
 // MCP Tool specification

@@ -9,29 +9,29 @@ import { UORObject } from '../core/uor-core';
  * Event priority levels
  */
 export enum EventPriority {
-  LOW = 'low',
-  NORMAL = 'normal',
-  HIGH = 'high',
-  CRITICAL = 'critical',
+  _LOW = 'low',
+  _NORMAL = 'normal',
+  _HIGH = 'high',
+  _CRITICAL = 'critical',
 }
 
 /**
  * Event delivery status
  */
 export enum EventDeliveryStatus {
-  PENDING = 'pending',
-  DELIVERED = 'delivered',
-  FAILED = 'failed',
-  RETRYING = 'retrying',
+  _PENDING = 'pending',
+  _DELIVERED = 'delivered',
+  _FAILED = 'failed',
+  _RETRYING = 'retrying',
 }
 
 /**
  * Channel visibility
  */
 export enum ChannelVisibility {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  PROTECTED = 'protected',
+  _PUBLIC = 'public',
+  _PRIVATE = 'private',
+  _PROTECTED = 'protected',
 }
 
 /**
@@ -100,11 +100,11 @@ export interface ChannelSubscription {
  */
 export interface EventUORObject extends UORObject {
   getEventData(): EventBase;
-  updateEvent(event: Partial<EventBase>): void;
-  addMetadata(key: string, value: any): void;
-  removeMetadata(key: string): void;
-  setPayload(payload: any): void;
-  setPriority(priority: EventPriority): void;
+  updateEvent(_event: Partial<EventBase>): void;
+  addMetadata(_key: string, _value: any): void;
+  removeMetadata(_key: string): void;
+  setPayload(_payload: any): void;
+  setPriority(_priority: EventPriority): void;
 }
 
 /**
@@ -112,12 +112,12 @@ export interface EventUORObject extends UORObject {
  */
 export interface ChannelUORObject extends UORObject {
   getChannelData(): Channel;
-  updateChannel(channel: Partial<Channel>): void;
-  addTag(tag: string): void;
-  removeTag(tag: string): void;
-  setVisibility(visibility: ChannelVisibility): void;
-  addMetadata(key: string, value: any): void;
-  removeMetadata(key: string): void;
+  updateChannel(_channel: Partial<Channel>): void;
+  addTag(_tag: string): void;
+  removeTag(_tag: string): void;
+  setVisibility(_visibility: ChannelVisibility): void;
+  addMetadata(_key: string, _value: any): void;
+  removeMetadata(_key: string): void;
 }
 
 /**
@@ -125,12 +125,12 @@ export interface ChannelUORObject extends UORObject {
  */
 export interface SubscriptionUORObject extends UORObject {
   getSubscriptionData(): ChannelSubscription;
-  updateSubscription(subscription: Partial<ChannelSubscription>): void;
-  updateCriteria(criteria: Partial<Record<string, any>>): void;
+  updateSubscription(_subscription: Partial<ChannelSubscription>): void;
+  updateCriteria(_criteria: Partial<Record<string, any>>): void;
   updateNotificationPreferences(
-    preferences: Partial<ChannelSubscription['notificationPreferences']>
+    _preferences: Partial<ChannelSubscription['notificationPreferences']>
   ): void;
-  setActive(active: boolean): void;
+  setActive(_active: boolean): void;
 }
 
 /**

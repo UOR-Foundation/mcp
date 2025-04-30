@@ -44,54 +44,54 @@ export interface StorageProvider {
 
   /**
    * Store a UOR object
-   * @param username User namespace
-   * @param object UOR object to store
+   * @param _username User namespace
+   * @param _object UOR object to store
    */
-  storeObject(username: string, object: UORObject): Promise<StorageResult>;
+  storeObject(_username: string, _object: UORObject): Promise<StorageResult>;
 
   /**
    * Retrieve a UOR object
-   * @param username User namespace
-   * @param type Object type
-   * @param id Object ID
+   * @param _username User namespace
+   * @param _type Object type
+   * @param _id Object ID
    */
-  getObject(username: string, type: string, id: string): Promise<UORObject | null>;
+  getObject(_username: string, _type: string, _id: string): Promise<UORObject | null>;
 
   /**
    * Delete a UOR object
-   * @param username User namespace
-   * @param type Object type
-   * @param id Object ID
+   * @param _username User namespace
+   * @param _type Object type
+   * @param _id Object ID
    */
-  deleteObject(username: string, type: string, id: string): Promise<StorageResult>;
+  deleteObject(_username: string, _type: string, _id: string): Promise<StorageResult>;
 
   /**
    * List UOR objects of a specific type
-   * @param username User namespace
-   * @param type Object type
+   * @param _username User namespace
+   * @param _type Object type
    */
-  listObjects(username: string, type: string): Promise<UORObject[]>;
+  listObjects(_username: string, _type: string): Promise<UORObject[]>;
 
   /**
    * Store large content as chunks
-   * @param username User namespace
-   * @param content Content to store
-   * @param metadata Content metadata
+   * @param _username User namespace
+   * @param _content Content to store
+   * @param _metadata Content metadata
    */
   storeLargeContent(
-    username: string,
-    content: Buffer | string,
-    metadata: Record<string, any>
+    _username: string,
+    _content: Buffer | string,
+    _metadata: Record<string, any>
   ): Promise<StorageResult>;
 
   /**
    * Retrieve large content
-   * @param username User namespace
-   * @param identifier Content identifier
+   * @param _username User namespace
+   * @param _identifier Content identifier
    */
   getLargeContent(
-    username: string,
-    identifier: string
+    _username: string,
+    _identifier: string
   ): Promise<{ content: Buffer | string; metadata: Record<string, any> } | null>;
 }
 
@@ -103,9 +103,9 @@ export abstract class BaseStorageProvider implements StorageProvider {
 
   /**
    * Initialize the storage provider
-   * @param config Provider configuration
+   * @param _config Provider configuration
    */
-  abstract initialize(config: StorageProviderConfig): Promise<boolean>;
+  abstract initialize(_config: StorageProviderConfig): Promise<boolean>;
 
   /**
    * Check if the provider is available
@@ -114,53 +114,53 @@ export abstract class BaseStorageProvider implements StorageProvider {
 
   /**
    * Store a UOR object
-   * @param username User namespace
-   * @param object UOR object to store
+   * @param _username User namespace
+   * @param _object UOR object to store
    */
-  abstract storeObject(username: string, object: UORObject): Promise<StorageResult>;
+  abstract storeObject(_username: string, _object: UORObject): Promise<StorageResult>;
 
   /**
    * Retrieve a UOR object
-   * @param username User namespace
-   * @param type Object type
-   * @param id Object ID
+   * @param _username User namespace
+   * @param _type Object type
+   * @param _id Object ID
    */
-  abstract getObject(username: string, type: string, id: string): Promise<UORObject | null>;
+  abstract getObject(_username: string, _type: string, _id: string): Promise<UORObject | null>;
 
   /**
    * Delete a UOR object
-   * @param username User namespace
-   * @param type Object type
-   * @param id Object ID
+   * @param _username User namespace
+   * @param _type Object type
+   * @param _id Object ID
    */
-  abstract deleteObject(username: string, type: string, id: string): Promise<StorageResult>;
+  abstract deleteObject(_username: string, _type: string, _id: string): Promise<StorageResult>;
 
   /**
    * List UOR objects of a specific type
-   * @param username User namespace
-   * @param type Object type
+   * @param _username User namespace
+   * @param _type Object type
    */
-  abstract listObjects(username: string, type: string): Promise<UORObject[]>;
+  abstract listObjects(_username: string, _type: string): Promise<UORObject[]>;
 
   /**
    * Store large content as chunks
-   * @param username User namespace
-   * @param content Content to store
-   * @param metadata Content metadata
+   * @param _username User namespace
+   * @param _content Content to store
+   * @param _metadata Content metadata
    */
   abstract storeLargeContent(
-    username: string,
-    content: Buffer | string,
-    metadata: Record<string, any>
+    _username: string,
+    _content: Buffer | string,
+    _metadata: Record<string, any>
   ): Promise<StorageResult>;
 
   /**
    * Retrieve large content
-   * @param username User namespace
-   * @param identifier Content identifier
+   * @param _username User namespace
+   * @param _identifier Content identifier
    */
   abstract getLargeContent(
-    username: string,
-    identifier: string
+    _username: string,
+    _identifier: string
   ): Promise<{ content: Buffer | string; metadata: Record<string, any> } | null>;
 }

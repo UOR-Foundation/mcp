@@ -582,7 +582,7 @@ class MainUIComponent {
       `;
     });
     
-    html += `</div>`;
+    html += '</div>';
     
     container.innerHTML = html;
     
@@ -856,8 +856,8 @@ class MainUIComponent {
       
       if (userAvatar && userAvatarLarge) {
         if (user.avatarUrl) {
-          userAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="${user.username}">`;
-          userAvatarLarge.innerHTML = `<img src="${user.avatarUrl}" alt="${user.username}">`;
+          userAvatar.innerHTML = `<img src='${user.avatarUrl}' alt='${user.username}'>`;
+          userAvatarLarge.innerHTML = `<img src='${user.avatarUrl}' alt='${user.username}'>`;
         } else {
           const initial = user.username ? user.username.charAt(0).toUpperCase() : '?';
           userAvatar.textContent = initial;

@@ -95,7 +95,6 @@ export class SchemaLoader {
    */
   private async initializeNode(): Promise<void> {
     const fs = require('fs');
-    const path = require('path');
 
     if (!fs.existsSync(this.schemasDir)) {
       throw new Error(`Schemas directory not found: ${this.schemasDir}`);
@@ -172,7 +171,7 @@ export class SchemaLoader {
   private async loadSchemaBrowser(schemaId: string, schema: JSONSchema7): Promise<void> {
     try {
       if (!schema.$id) {
-        throw new Error(`Schema is missing $id property`);
+        throw new Error('Schema is missing $id property');
       }
 
       const schemaSource: SchemaSource = {

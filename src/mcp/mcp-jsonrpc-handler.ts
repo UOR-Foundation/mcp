@@ -6,12 +6,9 @@ import {
   JSONRPCErrorCode,
   JSONRPCBatchRequest,
   JSONRPCBatchResponse,
-  MCPServerCapabilities,
-  JSONRPCNotification,
   JSONRPC_VERSION,
   MCP_PROTOCOL_VERSION,
   RequestId,
-  MCPImplementation,
   MCPResource,
 } from './mcp-jsonrpc';
 // Import the MCPServer
@@ -247,7 +244,7 @@ export class MCPJSONRPCHandler {
           // Forward to the existing MCP server for backward compatibility
           try {
             result = await this.mcpServer.handleRequest(method, params);
-          } catch (error) {
+          } catch (_error) {
             return this.createErrorResponse(
               id,
               JSONRPCErrorCode.MethodNotFound,
@@ -347,7 +344,7 @@ Resources are available using the uor:// scheme.
    */
   private async handleListTools(params: any): Promise<any> {
     // Implement pagination in the future if needed
-    const cursor = params?.cursor;
+    const _cursor = params?.cursor;
 
     // Define UOR tools
     const tools = [
@@ -487,7 +484,7 @@ Resources are available using the uor:// scheme.
    * @param params The params (may include pagination cursor)
    * @returns The list of available resources
    */
-  private async handleListResources(params: any): Promise<any> {
+  private async handleListResources(_params: any): Promise<any> {
     // Check if user is authenticated for personalized resources
     const isAuthenticated = this.mcpServer.isAuthenticated();
     const username = this.mcpServer.getCurrentUsername();
@@ -539,7 +536,7 @@ Resources are available using the uor:// scheme.
             });
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // If repository doesn't exist yet, just add basic repository resource
         resources.push({
           name: 'User Repository',

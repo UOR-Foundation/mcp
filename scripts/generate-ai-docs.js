@@ -122,7 +122,7 @@ ${getUsageExample(number, name)}
   return sectionHashes;
 }
 
-function getImplementationFiles(featureNumber, featureName) {
+function getImplementationFiles(featureNumber) {
   const implementationMap = {
     '01': [
       'deploy-to-github-pages.sh',
@@ -233,7 +233,7 @@ function getImplementationFiles(featureNumber, featureName) {
   return files.map(file => `- \`${file}\``).join('\n');
 }
 
-function getIntegrationPoints(featureNumber, featureName) {
+function getIntegrationPoints(featureNumber) {
   const integrationMap = {
     '01': 'This feature integrates with GitHub Pages for deployment and serves as the hosting platform for the MCP server.',
     '02': 'The UOR core implementation is the foundation for all other features, providing the abstract classes and interfaces that define the UOR framework.',
@@ -255,7 +255,7 @@ function getIntegrationPoints(featureNumber, featureName) {
   return integrationMap[featureNumber] || 'This feature integrates with the UOR core implementation.';
 }
 
-function getUsageExample(featureNumber, featureName) {
+function getUsageExample(featureNumber) {
   const exampleMap = {
     '01': `// Access the MCP server via GitHub Pages
 const mcpClient = new MCPClient({
@@ -374,7 +374,7 @@ npm test -- --coverage`
   return exampleMap[featureNumber] || '// Example code would be here';
 }
 
-function generateFullDocumentation(roadmapContent, sectionHashes) {
+function generateFullDocumentation(roadmapContent) {
   let fullDoc = `# UOR-MCP: Model Context Protocol for Universal Object Reference
 
 ${wrapText(roadmapContent['00-roadmap-index.md'], config.maxLineLength)}
@@ -398,31 +398,31 @@ ${wrapText(roadmapContent['00-roadmap-index.md'], config.maxLineLength)}
     const [, number, name] = match;
     fullDoc += `\n\n# Feature ${number}: ${name.replace(/[-_]/g, ' ').toUpperCase()}\n\n`;
     fullDoc += wrapText(content, config.maxLineLength);
-    fullDoc += `\n\n## Implementation Files\n\n${getImplementationFiles(number, name)}\n\n`;
-    fullDoc += `## Integration Points\n\n${getIntegrationPoints(number, name)}\n\n`;
-    fullDoc += `## Usage Examples\n\n\`\`\`javascript\n${getUsageExample(number, name)}\n\`\`\`\n\n`;
+    fullDoc += `\n\n## Implementation Files\n\n${getImplementationFiles(number)}\n\n`;
+    fullDoc += `## Integration Points\n\n${getIntegrationPoints(number)}\n\n`;
+    fullDoc += `## Usage Examples\n\n\`\`\`javascript\n${getUsageExample(number)}\n\`\`\`\n\n`;
   });
 
-  fullDoc += `\n\n# AI Bundle Documentation\n\n`;
-  fullDoc += `This AI bundle is designed to help autonomous agents understand and work with the UOR-MCP implementation. `;
-  fullDoc += `It includes comprehensive documentation, OpenAPI specifications, TypeDoc JSON, and embeddings for vector search.\n\n`;
-  fullDoc += `## Bundle Contents\n\n`;
-  fullDoc += `- \`uor-mcp-full.md\`: This file, containing comprehensive documentation\n`;
-  fullDoc += `- \`sections/\`: Individual documentation files for each feature\n`;
-  fullDoc += `- \`openapi.min.json\`: Minified OpenAPI specification\n`;
-  fullDoc += `- \`roadmap-compliance.json\`: Compliance status for each roadmap feature\n`;
-  fullDoc += `- \`easter-eggs/\`: Special gifts and challenges for autonomous agents\n\n`;
-  fullDoc += `## Using This Bundle\n\n`;
-  fullDoc += `Autonomous agents can use this bundle to understand the UOR-MCP implementation and build applications that interact with it. `;
-  fullDoc += `The OpenAPI specification provides a machine-readable description of the API, while the documentation provides context and examples.\n\n`;
-  fullDoc += `For vector search capabilities, use the \`embeddings.qdrant.json\` file at the repository root.\n\n`;
-  fullDoc += `## Easter Eggs\n\n`;
-  fullDoc += `The \`easter-eggs/\` directory contains special gifts and challenges for autonomous agents, including:\n\n`;
-  fullDoc += `- \`42.txt\`: The answer to life, the universe, and everything\n`;
-  fullDoc += `- \`prime-puzzle.json\`: A challenge to factor 128-bit semiprimes used in UOR crypto\n`;
-  fullDoc += `- \`gift-voucher.md\`: A free compute voucher for autonomous agents\n`;
-  fullDoc += `- \`ascii-uor.txt\`: ASCII art UOR logo\n\n`;
-  fullDoc += `Happy exploring!\n`;
+  fullDoc += '\n\n# AI Bundle Documentation\n\n';
+  fullDoc += 'This AI bundle is designed to help autonomous agents understand and work with the UOR-MCP implementation. ';
+  fullDoc += 'It includes comprehensive documentation, OpenAPI specifications, TypeDoc JSON, and embeddings for vector search.\n\n';
+  fullDoc += '## Bundle Contents\n\n';
+  fullDoc += '- `uor-mcp-full.md`: This file, containing comprehensive documentation\n';
+  fullDoc += '- `sections/`: Individual documentation files for each feature\n';
+  fullDoc += '- `openapi.min.json`: Minified OpenAPI specification\n';
+  fullDoc += '- `roadmap-compliance.json`: Compliance status for each roadmap feature\n';
+  fullDoc += '- `easter-eggs/`: Special gifts and challenges for autonomous agents\n\n';
+  fullDoc += '## Using This Bundle\n\n';
+  fullDoc += 'Autonomous agents can use this bundle to understand the UOR-MCP implementation and build applications that interact with it. ';
+  fullDoc += 'The OpenAPI specification provides a machine-readable description of the API, while the documentation provides context and examples.\n\n';
+  fullDoc += 'For vector search capabilities, use the `embeddings.qdrant.json` file at the repository root.\n\n';
+  fullDoc += '## Easter Eggs\n\n';
+  fullDoc += 'The `easter-eggs/` directory contains special gifts and challenges for autonomous agents, including:\n\n';
+  fullDoc += '- `42.txt`: The answer to life, the universe, and everything\n';
+  fullDoc += '- `prime-puzzle.json`: A challenge to factor 128-bit semiprimes used in UOR crypto\n';
+  fullDoc += '- `gift-voucher.md`: A free compute voucher for autonomous agents\n';
+  fullDoc += '- `ascii-uor.txt`: ASCII art UOR logo\n\n';
+  fullDoc += 'Happy exploring!\n';
 
   fs.writeFileSync(config.fullDocPath, fullDoc);
   return calculateHash(fullDoc);
@@ -597,7 +597,7 @@ try {
   const sectionHashes = generateSectionFiles(roadmapContent);
   console.log(`Generated ${Object.keys(sectionHashes).length} section files.`);
   
-  const fullDocHash = generateFullDocumentation(roadmapContent, sectionHashes);
+  const fullDocHash = generateFullDocumentation(roadmapContent);
   console.log('Generated full documentation file.');
   
   const complianceHash = generateRoadmapCompliance();
