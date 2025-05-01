@@ -180,7 +180,7 @@ export class MessageManager {
    * @returns Promise that resolves when the message is published
    */
   async publishMessage(message: MessageObject): Promise<void> {
-    message.setStatus(MessageStatus.SENT);
+    message.setStatus(MessageStatus._SENT);
     message.setCanonicalRepresentation(message.computeCanonicalRepresentation());
     message.setPrimeDecomposition(message.computePrimeDecomposition());
 
@@ -196,7 +196,7 @@ export class MessageManager {
    * @returns Promise that resolves when the message is delivered
    */
   async deliverMessage(message: MessageObject, recipientId: string): Promise<void> {
-    message.setStatus(MessageStatus.DELIVERED);
+    message.setStatus(MessageStatus._DELIVERED);
     message.setCanonicalRepresentation(message.computeCanonicalRepresentation());
     message.setPrimeDecomposition(message.computePrimeDecomposition());
 
@@ -209,7 +209,7 @@ export class MessageManager {
    * @returns The updated message object
    */
   markMessageAsRead(message: MessageObject): MessageObject {
-    message.setStatus(MessageStatus.READ);
+    message.setStatus(MessageStatus._READ);
     message.setCanonicalRepresentation(message.computeCanonicalRepresentation());
     message.setPrimeDecomposition(message.computePrimeDecomposition());
     return message;
