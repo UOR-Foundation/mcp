@@ -68,7 +68,6 @@ const mockAuthService = {
   config: {
     githubOAuth: {
       clientId: 'test-client-id',
-      redirectUri: 'https://example.com/auth-callback.html',
       tokenExchangeProxy: 'https://auth-proxy.example.com/token-exchange',
       scopes: ['repo'],
     },
@@ -102,13 +101,12 @@ describe('Client-side Auth Service', () => {
       mockAuthService.generateRandomString.mockReturnValue('random-state');
       mockAuthService.startAuthFlow = function () {
         const clientId = this.config.githubOAuth.clientId;
-        const redirectUri = this.config.githubOAuth.redirectUri;
         const scopes = this.config.githubOAuth.scopes.join(' ');
         const state = this.generateRandomString(32);
 
         sessionStorage.setItem('github-oauth-state', state);
 
-        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+        return `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes)}&state=${state}`;
       };
 
       // Call the function
@@ -117,7 +115,6 @@ describe('Client-side Auth Service', () => {
       // Verify the URL
       expect(oauthUrl).toContain('https://github.com/login/oauth/authorize');
       expect(oauthUrl).toContain('client_id=test-client-id');
-      expect(oauthUrl).toContain('redirect_uri=https%3A%2F%2Fexample.com%2Fauth-callback.html');
       expect(oauthUrl).toContain('scope=repo');
       expect(oauthUrl).toContain('state=random-state');
 
@@ -244,8 +241,7 @@ describe('Client-side Auth Service', () => {
           },
           body: JSON.stringify({
             code: code,
-            client_id: this.config.githubOAuth.clientId,
-            redirect_uri: this.config.githubOAuth.redirectUri,
+            client_id: this.config.githubOAuth.clientId
           }),
         });
 
@@ -269,8 +265,7 @@ describe('Client-side Auth Service', () => {
           method: 'POST',
           body: JSON.stringify({
             code: 'real-code',
-            client_id: 'test-client-id',
-            redirect_uri: 'https://example.com/auth-callback.html',
+            client_id: 'test-client-id'
           }),
         })
       );
@@ -298,7 +293,6 @@ describe('Client-side Auth Service', () => {
             body: JSON.stringify({
               code: code,
               client_id: this.config.githubOAuth.clientId,
-              redirect_uri: this.config.githubOAuth.redirectUri,
             }),
           });
 
@@ -352,7 +346,6 @@ describe('Client-side Auth Service', () => {
             body: JSON.stringify({
               code: code,
               client_id: this.config.githubOAuth.clientId,
-              redirect_uri: this.config.githubOAuth.redirectUri,
             }),
           });
 
