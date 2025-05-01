@@ -6,6 +6,7 @@
 
 const allowedOrigins = [
   'https://uor-foundation.github.io',
+  'https://uormcp.netlify.app',
   'https://uor-mcp.netlify.app',
   'http://localhost:3000',
   'http://localhost:8080',
@@ -76,10 +77,17 @@ exports.handler = async function(event, context) {
         headers,
         body: JSON.stringify({ 
           success: false,
-          error: 'Server configuration error' 
+          error: 'Server configuration error: GITHUB_CLIENT_SECRET is not set' 
         })
       };
     }
+    
+    console.log('Token exchange request:', { 
+      code_length: code ? code.length : 0,
+      client_id,
+      redirect_uri,
+      has_secret: !!client_secret
+    });
     
     const response = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -96,6 +104,13 @@ exports.handler = async function(event, context) {
     });
     
     const data = await response.json();
+    
+    console.log('GitHub OAuth response:', {
+      status: response.status,
+      has_error: !!data.error,
+      error: data.error,
+      error_description: data.error_description
+    });
     
     if (data.error) {
       console.error('GitHub API error:', data.error);
