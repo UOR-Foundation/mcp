@@ -68,16 +68,24 @@ exports.handler = async function(event, context) {
       };
     }
     
-    const client_secret = process.env.GITHUB_CLIENT_SECRET;
+    const client_secret = process.env.GITHUB_CLIENT_SECRET || 
+                         process.env.GITHUB_CLIENT_SECRET_KEY || 
+                         process.env.GH_CLIENT_SECRET ||
+                         process.env.GITHUB_SECRET;
     
     if (!client_secret) {
-      console.error('GITHUB_CLIENT_SECRET environment variable is not set');
+      console.error('GitHub client secret environment variable is not set');
+      console.log('Available environment variables:', Object.keys(process.env).filter(key => 
+        key.includes('GITHUB') || key.includes('GH') || key.includes('SECRET')
+      ));
+      
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({ 
           success: false,
-          error: 'Server configuration error: GITHUB_CLIENT_SECRET is not set' 
+          error: 'Server configuration error: GitHub client secret is not set',
+          details: 'Please check Netlify environment variables configuration'
         })
       };
     }
