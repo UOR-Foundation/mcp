@@ -209,10 +209,30 @@ To deploy your own instance:
 
 1. Fork this repository
 2. Create a GitHub OAuth application in your [GitHub Developer Settings](https://github.com/settings/developers)
-   - Set the Authorization Callback URL to `https://68113dd199a34737508b5211--uor-mcp.netlify.app/auth-callback.html`
-3. Create a token exchange proxy (see [Token Exchange Proxy Guide](docs/token-exchange-proxy.md))
-4. Run the deployment script: `./scripts/deploy-to-github-pages.sh`
-5. Access your deployment at `https://68113dd199a34737508b5211--uor-mcp.netlify.app/`
+   - Set the Authorization Callback URL to `https://api.netlify.com/auth/done`
+3. Deploy to Netlify (see [Netlify Deployment Guide](#netlify-deployment) below)
+4. Access your deployment at your Netlify URL (e.g., `https://your-site-name.netlify.app`)
+
+### Authentication via Netlify OAuth proxy
+
+This application uses Netlify's built-in OAuth proxy for secure GitHub authentication:
+
+1. The OAuth callback URL must be set to `https://api.netlify.com/auth/done` in your GitHub OAuth app settings
+2. The GitHub client ID and secret are stored as environment variables in Netlify
+3. To rotate credentials, update both the GitHub OAuth app and the Netlify environment variables
+
+### Netlify Deployment
+
+To deploy to Netlify:
+
+1. Connect your GitHub repository to Netlify
+2. Configure the build settings:
+   - Build command: `npm run build && npm run build:client`
+   - Publish directory: `dist/public`
+3. Add the following environment variables in Netlify:
+   - `GITHUB_CLIENT_ID`: Your GitHub OAuth app client ID
+   - `GITHUB_CLIENT_SECRET`: Your GitHub OAuth app client secret
+4. Deploy your site
 
 Alternatively, you can use URL parameters to configure your deployment:
 

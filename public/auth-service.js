@@ -110,7 +110,6 @@ class AuthService {
       throw new Error('GitHub client ID is not configured');
     }
     
-    const redirectUri = this.config.githubOAuth.redirectUri;
     const scopes = this.config.githubOAuth.scopes.join(' ');
     
     // Add state parameter for security
@@ -118,8 +117,8 @@ class AuthService {
     // Store state for verification
     sessionStorage.setItem('github-oauth-state', state);
     
-    // Build the OAuth URL
-    const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+    // Build the OAuth URL - omit redirectUri to use Netlify's built-in OAuth proxy
+    const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes)}&state=${state}`;
     
     // Store auth flow start time
     sessionStorage.setItem('github-auth-flow-started', Date.now().toString());
@@ -189,8 +188,8 @@ class AuthService {
         },
         body: JSON.stringify({
           code: code,
-          client_id: this.config.githubOAuth.clientId,
-          redirect_uri: this.config.githubOAuth.redirectUri
+          client_id: this.config.githubOAuth.clientId
+          // Removed redirectUri to use Netlify's built-in OAuth proxy
         })
       });
       

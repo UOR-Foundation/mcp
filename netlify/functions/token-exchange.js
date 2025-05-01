@@ -122,8 +122,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({
         client_id,
         client_secret,
-        code,
-        redirect_uri
+        code
       })
     });
     

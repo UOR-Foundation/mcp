@@ -6,10 +6,9 @@
 window.MCPConfig = {
   // Default configuration values
   defaultConfig: {
-    // GitHub OAuth configuration - Pre-configured for UOR-Foundation deployment
+    // GitHub OAuth configuration - Using Netlify's built-in OAuth proxy
     githubOAuth: {
       clientId: 'Ov23li9oj0Sn7CVoXC20', // Client ID provided by user
-      redirectUri: window.location.origin + '/auth-callback.html',
       tokenExchangeProxy: (window.location.hostname.endsWith('.netlify.app') ? 
                           '/.netlify/functions/token-exchange' : 
                           'https://uor-foundation-mcp-auth.netlify.app/.netlify/functions/token-exchange'),
