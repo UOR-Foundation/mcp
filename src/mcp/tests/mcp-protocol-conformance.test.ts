@@ -68,7 +68,7 @@ describe('MCP Protocol Conformance', () => {
       expect(response).toHaveProperty('jsonrpc', '2.0');
       expect(response).toHaveProperty('id', '1');
       expect(response).toHaveProperty('error');
-      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode.InvalidRequest);
+      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode._InvalidRequest);
     });
     
     it('should handle JSON-RPC 2.0 batch requests', async () => {
@@ -238,7 +238,7 @@ describe('MCP Protocol Conformance', () => {
       const response = await handler.handleJSONRPCRequest(JSON.stringify(request));
       
       expect(response).toHaveProperty('error');
-      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode.MethodNotFound);
+      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode._MethodNotFound);
     });
     
     it('should handle invalid params errors', async () => {
@@ -252,7 +252,7 @@ describe('MCP Protocol Conformance', () => {
       const response = await handler.handleJSONRPCRequest(JSON.stringify(request));
       
       expect(response).toHaveProperty('error');
-      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode.InvalidParams);
+      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode._InvalidParams);
     });
     
     it('should handle internal errors', async () => {
@@ -268,7 +268,7 @@ describe('MCP Protocol Conformance', () => {
       const response = await handler.handleJSONRPCRequest(JSON.stringify(request));
       
       expect(response).toHaveProperty('error');
-      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode.InternalError);
+      expect((response as JSONRPCErrorResponse).error.code).toBe(JSONRPCErrorCode._InternalError);
     });
   });
 });
