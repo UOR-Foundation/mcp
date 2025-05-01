@@ -270,8 +270,7 @@ const uorObject = UORFactory.createObject('concept', {
 const canonicalRep = uorObject.getCanonicalRepresentation();`,
     '03': `// Authenticate with GitHub
 const authService = new AuthService({
-  clientId: 'YOUR_GITHUB_CLIENT_ID',
-  redirectUri: 'https://your-app.com/auth-callback'
+  clientId: 'YOUR_GITHUB_CLIENT_ID'
 });
 
 authService.startAuthFlow();`,
