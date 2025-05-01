@@ -148,7 +148,7 @@ export class PubSubManager {
     const deliveryRecords: DeliveryRecord[] = subscribers.map(subscriber => ({
       eventId: event.id,
       subscriberId: subscriber.getSubscriptionData().subscriber,
-      status: EventDeliveryStatus.PENDING,
+      status: EventDeliveryStatus._PENDING,
       attempts: 0,
       maxAttempts: 3,
       lastAttempt: null,
@@ -175,8 +175,8 @@ export class PubSubManager {
       for (const [eventId, records] of this.deliveryQueue.entries()) {
         const pendingRecords = records.filter(
           record =>
-            record.status === EventDeliveryStatus.PENDING ||
-            record.status === EventDeliveryStatus.RETRYING
+            record.status === EventDeliveryStatus._PENDING ||
+            record.status === EventDeliveryStatus._RETRYING
         );
 
         if (pendingRecords.length === 0) {
@@ -198,9 +198,9 @@ export class PubSubManager {
             record.error = (error as Error).message;
 
             if (record.attempts >= record.maxAttempts) {
-              record.status = EventDeliveryStatus.FAILED;
+              record.status = EventDeliveryStatus._FAILED;
             } else {
-              record.status = EventDeliveryStatus.RETRYING;
+              record.status = EventDeliveryStatus._RETRYING;
               const delayMinutes = Math.pow(2, record.attempts - 1);
               record.nextAttempt = new Date(Date.now() + delayMinutes * 60 * 1000);
             }
@@ -225,7 +225,7 @@ export class PubSubManager {
 
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    record.status = EventDeliveryStatus.DELIVERED;
+    record.status = EventDeliveryStatus._DELIVERED;
     record.deliveredAt = new Date();
   }
 
@@ -252,7 +252,7 @@ export class PubSubManager {
         return false;
       }
 
-      if (channelData.visibility === ChannelVisibility.PRIVATE) {
+      if (channelData.visibility === ChannelVisibility._PRIVATE) {
         const subscriberNamespace = this.getNamespaceFromId(subscriptionData.subscriber);
         const channelNamespace = channelData.namespace;
 
