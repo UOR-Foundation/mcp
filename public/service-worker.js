@@ -9,7 +9,6 @@ const RESOURCES_TO_CACHE = [
   '/index.html',
   '/config.js',
   '/auth-service.js',
-  '/auth-callback.html',
   '/styles.css',
   '/app.js',
   '/mcp-client.js',
