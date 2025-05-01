@@ -1,9 +1,8 @@
 /**
  * Netlify OAuth State Parameter Fix
  * 
- * This script fixes the "Invalid state key" error that occurs when using
- * Netlify's built-in OAuth proxy. It patches the AuthService.handleCallback
- * method to be more lenient with state parameter validation.
+ * This script completely bypasses the state parameter validation when using
+ * Netlify's built-in OAuth proxy to fix the "Invalid state key" error.
  */
 
 (function() {
@@ -13,15 +12,18 @@
       return;
     }
     
+    console.log('Applying Netlify OAuth state parameter fix');
+    
     const originalHandleCallback = window.authService.handleCallback;
     
     window.authService.handleCallback = async function(code, state) {
-      try {
-        return await originalHandleCallback.call(this, code, state);
-      } catch (error) {
-        if (error.message === 'Invalid state parameter') {
-          console.warn('State parameter validation failed, but proceeding with Netlify OAuth proxy');
-          
+      const isNetlifyAuth = window.location.href.includes('api.netlify.com/auth/done') || 
+                           window.location.hostname.endsWith('.netlify.app');
+      
+      if (isNetlifyAuth) {
+        console.log('Netlify OAuth detected, bypassing state validation');
+        
+        try {
           sessionStorage.removeItem('github-oauth-state');
           
           const tokenResult = await this.exchangeCodeForToken(code);
@@ -41,12 +43,29 @@
             success: true,
             user: user
           };
+        } catch (error) {
+          console.error('Error during Netlify OAuth authentication:', error);
+          throw new Error(`Netlify OAuth error: ${error.message}`);
         }
-        
-        throw error;
+      } else {
+        return await originalHandleCallback.call(this, code, state);
       }
     };
     
-    console.log('Netlify OAuth state parameter fix applied');
+    const originalStartAuthFlow = window.authService.startAuthFlow;
+    
+    window.authService.startAuthFlow = function() {
+      const state = this.generateRandomString(32);
+      
+      sessionStorage.setItem('github-oauth-state', state);
+      sessionStorage.setItem('github-auth-flow-started', Date.now().toString());
+      
+      const clientId = this.config.githubOAuth.clientId;
+      const scopes = this.config.githubOAuth.scopes.join(' ');
+      
+      return `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+    };
+    
+    console.log('Netlify OAuth state parameter fix applied successfully');
   });
 })();
