@@ -50,8 +50,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Don't cache GitHub API requests or authentication endpoints
   if (event.request.url.includes('api.github.com') || 
-      event.request.url.includes('github.com/login') ||
-      event.request.url.includes('auth-callback')) {
+      event.request.url.includes('github.com/login')) {
     return;
   }
   
