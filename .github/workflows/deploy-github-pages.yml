@@ -81,7 +81,7 @@ jobs:
           sed -i "s/CLIENT_ID_PLACEHOLDER/${{ secrets.GITHUB_OAUTH_CLIENT_ID }}/g" dist/public/config.js
       
       - name: Setup GitHub Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v5
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
