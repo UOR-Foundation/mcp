@@ -33,8 +33,8 @@ export class MessageObject extends UORObject implements MessageUORObject {
       recipients: data.recipients || [],
       content: data.content || '',
       contentType: data.contentType || 'text/plain',
-      status: data.status || MessageStatus.DRAFT,
-      priority: data.priority || MessagePriority.NORMAL,
+      status: data.status || MessageStatus._DRAFT,
+      priority: data.priority || MessagePriority._NORMAL,
       createdAt: data.createdAt || new Date(),
       updatedAt: data.updatedAt || new Date(),
       encrypted: data.encrypted || false,
@@ -71,13 +71,13 @@ export class MessageObject extends UORObject implements MessageUORObject {
     this.data.updatedAt = new Date();
 
     switch (status) {
-      case MessageStatus.SENT:
+      case MessageStatus._SENT:
         this.data.sentAt = new Date();
         break;
-      case MessageStatus.DELIVERED:
+      case MessageStatus._DELIVERED:
         this.data.deliveredAt = new Date();
         break;
-      case MessageStatus.READ:
+      case MessageStatus._READ:
         this.data.readAt = new Date();
         break;
     }
@@ -269,7 +269,7 @@ export class MessageObject extends UORObject implements MessageUORObject {
     if (this.data.threadId) coherenceScore += 0.1;
     if (this.data.parentMessageId) coherenceScore += 0.1;
 
-    if (this.data.status !== MessageStatus.DRAFT) coherenceScore += 0.1;
+    if (this.data.status !== MessageStatus._DRAFT) coherenceScore += 0.1;
     if (this.data.sentAt) coherenceScore += 0.1;
     if (this.data.deliveredAt) coherenceScore += 0.1;
     if (this.data.readAt) coherenceScore += 0.1;
