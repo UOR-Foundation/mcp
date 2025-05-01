@@ -40,7 +40,7 @@ describe('MCPJSONRPCHandler', () => {
       const response = await handler.handleJSONRPCRequest('invalid-json');
       const responseObj = response as any;
       expect(responseObj.error).toBeDefined();
-      expect(responseObj.error.code).toBe(JSONRPCErrorCode.ParseError);
+      expect(responseObj.error.code).toBe(JSONRPCErrorCode._ParseError);
       
       // Test other invalid request formats
       const invalidObjects = [
@@ -52,14 +52,14 @@ describe('MCPJSONRPCHandler', () => {
         const resp = await handler.handleJSONRPCRequest(request);
         const respObj = resp as any;
         expect(respObj.error).toBeDefined();
-        expect(respObj.error.code).toBe(JSONRPCErrorCode.InvalidRequest);
+        expect(respObj.error.code).toBe(JSONRPCErrorCode._InvalidRequest);
       }
       
       // Empty object gets special handling
       const emptyResponse = await handler.handleJSONRPCRequest({});
       const emptyResponseObj = emptyResponse as any;
       expect(emptyResponseObj.error).toBeDefined();
-      expect(emptyResponseObj.error.code).toBe(JSONRPCErrorCode.ParseError);
+      expect(emptyResponseObj.error.code).toBe(JSONRPCErrorCode._ParseError);
     });
     
     it('should accept valid JSON-RPC requests', async () => {
@@ -124,7 +124,7 @@ describe('MCPJSONRPCHandler', () => {
       
       const responseObj = response as any;
       expect(responseObj.error).toBeDefined();
-      expect(responseObj.error.code).toBe(JSONRPCErrorCode.InvalidRequest);
+      expect(responseObj.error.code).toBe(JSONRPCErrorCode._InvalidRequest);
       expect(responseObj.error.message).toContain('Unsupported protocol version');
     });
   });
@@ -256,7 +256,7 @@ describe('MCPJSONRPCHandler', () => {
       expect(Array.isArray(response)).toBe(true);
       expect(response.length).toBe(1);
       expect(response[0].error).toBeDefined();
-      expect(response[0].error.code).toBe(JSONRPCErrorCode.InvalidRequest);
+      expect(response[0].error.code).toBe(JSONRPCErrorCode._InvalidRequest);
     });
   });
   
@@ -277,7 +277,7 @@ describe('MCPJSONRPCHandler', () => {
       
       const responseObj = response as any;
       expect(responseObj.error).toBeDefined();
-      expect(responseObj.error.code).toBe(JSONRPCErrorCode.MethodNotFound);
+      expect(responseObj.error.code).toBe(JSONRPCErrorCode._MethodNotFound);
     });
     
     it('should handle internal errors', async () => {
@@ -305,7 +305,7 @@ describe('MCPJSONRPCHandler', () => {
       
       const responseObj = response as any;
       expect(responseObj.error).toBeDefined();
-      expect(responseObj.error.code).toBe(JSONRPCErrorCode.InternalError);
+      expect(responseObj.error.code).toBe(JSONRPCErrorCode._InternalError);
     });
   });
   
