@@ -1,5 +1,62 @@
+![UOR project provisional banner: modeled MCP core, illustrative placeholder not approved](assets/readme-banner-PLACEHOLDER.png)
+
+*Illustrative generic UOR project artwork, pending UOR Foundation brand approval.*
+
 # MCP
 
+[![LexLean CI](https://github.com/UOR-Foundation/mcp/actions/workflows/lexlean.yml/badge.svg?branch=main)](https://github.com/UOR-Foundation/mcp/actions/workflows/lexlean.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-718096)](LICENSE-MIT)
+
+**A shared, inspectable core for MCP servers built with LexLean.**
+
+## Why this core exists
+
+Two servers can claim to support the same protocol while responding differently
+to an invalid request, a missing permission, or a long-running task. Those
+differences make it harder to connect tools and trust what the software reports.
+
+This project puts common server-protocol decisions into one structured model.
+The same core can then be used by different servers without rewriting those
+rules independently. The goal is clearer behavior and evidence, not a claim
+that every possible MCP transport or application is supported.
+
+## What is implemented
+
+The repository defines an MCP server protocol core in
+[LexLean](https://github.com/UOR-Foundation/lexlean). It models JSON-RPC
+messages, methods, tool/resource access, errors, tasks, and Streamable HTTP
+behavior. Lean checks selected properties of that model.
+
+The [conformance report](CONFORMANCE-RUN.md) documents a pinned run of the
+official MCP server scenarios and schema, including **37/37 required
+scenarios passing**. That is evidence for the recorded core and revision,
+not certification of arbitrary hosts, stdio servers, or deployed services.
+
+## Start here
+
+| Reader goal | Best next step |
+| --- | --- |
+| Understand the actual protocol surface | [Technical scope](#technical-scope-and-evidence) and [module inventory](#status) |
+| Inspect conformance evidence | [Conformance run and boundaries](CONFORMANCE-RUN.md) |
+| Understand request and error handling | [Lifecycle notes](LIFECYCLE.md) and [tool model](TOOLS.md) |
+| Work with the LexLean sources | [Project configuration](lexlean.toml) and [`src/`](src/) |
+| Understand current acceptance gates | [CI record](CI.md), [verification rules](VERIFICATION.md), and [repository instructions](AGENTS.md) |
+
+Read the sources and their evidence before trying to use this as a server.
+This repository defines a protocol core; a complete host and transport
+integration has separate obligations. Commands requiring the locked SDK
+have not been executed as part of this README update.
+
+## Contents
+
+- [Why this core exists](#why-this-core-exists)
+- [What is implemented](#what-is-implemented)
+- [Start here](#start-here)
+- [Technical scope and evidence](#technical-scope-and-evidence)
+- [Status](#status)
+- [Repository](#repository)
+
+## Technical scope and evidence
 The [Model Context Protocol](https://modelcontextprotocol.io) revision
 `2026-07-28`, implemented as a server protocol core in
 [LexLean](https://github.com/UOR-Foundation/LexLean).
