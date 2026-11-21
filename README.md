@@ -1,8 +1,63 @@
-# MCP
+![UOR MCP preliminary banner: protocol core. Generic UOR placeholder, not approved](assets/readme-banner-PLACEHOLDER.png)
+
+*Illustrative generic UOR placeholder artwork, pending UOR Foundation brand approval.*
+
+# UOR MCP protocol core
+
+**Define how MCP requests should behave, and make those rules checkable.**
+
+## Why this exists
+
+Apps that connect AI assistants to tools need agreement about the messages
+they send, the errors they return, and what happens when a task continues
+across more than one request. Small differences between implementations
+can create confusing failures or unexpected behavior.
+
+This repository models a **server-side core for the Model Context Protocol
+(MCP)** using [LexLean](https://github.com/UOR-Foundation/lexlean). It
+describes protocol messages and decisions in a precise form, so those
+rules can be examined and tested rather than reimplemented from scratch.
+
+**Important:** This is source code for a protocol core, not a hosted MCP
+server or a production-ready connection. The README's own
+[conformance status](#status) explicitly limits what has been tested
+against MCP's external specification.
+
+## What you can find here
+
+- [Protocol models](src/): typed requests, results, errors, and handling rules.
+- [Tasks and longer-running work](TASKS.md): task state and lifecycle rules.
+- [Tool behavior](TOOLS.md): tool catalogs, calls, and related checks.
+- [Transport details](TRANSPORT.md): Streamable HTTP decisions and limits.
+- [Current conformance evidence](CONFORMANCE-RUN.md): which outside checks
+  have actually been exercised, and what remains unsupported.
+
+## Start here
+
+1. Read [Status](#status) to distinguish implemented models from validated
+   interoperability.
+2. Use the [module index](#status) to find a specific protocol behavior.
+3. See [CI.md](CI.md) and [VERIFICATION.md](VERIFICATION.md) for the
+   repository's actual verification boundary.
+
+The project is not yet bound to a released PrismPM SDK, so the usual
+`just vv` and devcontainer workflow are unavailable until its locks are
+in place. Do not treat that absence as a passing acceptance test.
+
+## Contents
+
+- [Why this exists](#why-this-exists)
+- [What you can find here](#what-you-can-find-here)
+- [Start here](#start-here)
+- [Technical scope](#technical-scope)
+- [Status](#status)
+- [Repository](#repository)
+
+## Technical scope
 
 The [Model Context Protocol](https://modelcontextprotocol.io) revision
 `2026-07-28`, implemented as a server protocol core in
-[LexLean](https://github.com/UOR-Foundation/LexLean).
+[LexLean](https://github.com/UOR-Foundation/lexlean).
 
 Conformance to MCP is established only by MCP's own oracles: the
 `2026-07-28` schema and the `modelcontextprotocol/conformance` suite, run
@@ -10,7 +65,6 @@ against a conformance build of this core with the suite's fixture tools. The
 same core artifact, by digest, is linked unchanged by
 [UOR-Foundation/lexlean-mcp](https://github.com/UOR-Foundation/lexlean-mcp)
 and by any other LexLean-authored MCP server.
-
 ## Status
 
 The protocol core is modeled in LexLean language 1.2 under `src/` (project
